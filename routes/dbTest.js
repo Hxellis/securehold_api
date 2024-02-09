@@ -1,7 +1,6 @@
 import express from "express";
-import path from 'path'
 
-const dbTest  = express.Router()
+export const dbTest  = express.Router()
 
 dbTest.get('/', (req, res) => {
     res.status(200).json({
@@ -32,4 +31,3 @@ dbTest.param("id", (req, res, next, id) => {
     next()
 })
 
-export default dbTest
