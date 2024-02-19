@@ -1,5 +1,5 @@
 import express from "express";
-import { adminsModel, pendingApprovalsModel } from '../models/models.js'
+import { adminsModel, pendingApprovalsModel, signupCodesModel, forgetCodesModel } from '../models/models.js'
 import crypto from 'crypto'
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
@@ -9,11 +9,12 @@ dotenv.config()
 
 export const admins  = express.Router()
 
-function errorMessage(msg, res) {
-    console.log("error: " + msg)
-    res.status(404).json({
-        status: 404,
-        msg: msg
+function errorMessage(error, res) {
+    console.log("error: " + error)
+    res.status(400).json({
+        status: 400,
+        msg: "API error",
+        error: error
     })
 }
 
@@ -26,7 +27,7 @@ admins.post("/login", async (req, res) => {
         //status 200 here to prevent frontend axios reading as API failed
         return res.status(200).json({
             status: 401,
-            msg: "User not found"
+            error: "User not found"
         })
     } 
 
@@ -47,49 +48,67 @@ admins.post("/login", async (req, res) => {
         .status(200)
         .json({
             status: 200,
-            msg: "Login successful"
+            error: "Login successful"
         })
     }
     return  res.status(200).json({
         status: 401,
-        msg: "Invalid Password"
+        error: "Invalid Password"
     })
 })
 
-admins.get("/getAllPendingApprovals", async (req, res) => {
-    await pendingApprovalsModel.find()
-    .then ( (data) => {
-        return res.status(200).json({
-            status: 200,
-            msg: "Pending list retrieved",
-            data: data
-        })
-    })
-    .catch ((e) => {
-        return errorMessage(e, res)
-    })
-    
-})
+
 
 admins.post("/submitApproval", async (req, res) => {
-    const existingEmail = await adminsModel.findOne({ email: req.body.email })
+    const username = req.body.username
+    const email = req.body.email
+    const password = req.body.password
+    const code = req.body.code
+
+    //email checking
+    const existingEmail = await adminsModel.findOne({ email: email })
     .catch( (e) => {
         return errorMessage(e, res)
     })
-   
     if (existingEmail) {
         return res.status(200).json({
-            status:400,
-            msg: "Email already in use"
+            status: 409,
+            error: "Email already in use"
         })
     }
     
+    //verification code check
+    const signupCodes = await signupCodesModel.findOne( { email: email })
+    .catch( (e) => {
+        return errorMessage(e,res)
+    })
+    if (!signupCodes) {
+        return res.status(200).json({
+            status: 400,
+            msg: "Verification code was never sent"
+        })
+    }
+    if (signupCodes.code !== code) {
+        return res.status(200).json({
+            status: 401,
+            msg: "Verification code not matching"
+        })
+    }
+    const expiryTime = 10 * 60 * 1000
+    if ((Date.now() - signupCodes.timestamp) > expiryTime) {
+        return res.status(200).json({
+            status: 401,
+            msg: "Verification code expired"
+        })
+    }
+    await signupCodesModel.findOneAndDelete({ email: email })
+
     const salt = crypto.randomBytes(16).toString('hex')
-    const hash = crypto.pbkdf2Sync(req.body.password, salt, 1000, 64, `sha512`).toString('hex')
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, `sha512`).toString('hex')
 
     const newAdmin = {
-        username: req.body.username,
-        email: req.body.email,
+        username: username,
+        email: email,
         hash: hash,
         salt: salt
     }
@@ -98,7 +117,7 @@ admins.post("/submitApproval", async (req, res) => {
     .then((data) => {
         return res.status(200).json({
             status: 200,
-            msg: "Admin sent for approval",
+            error: "Admin sent for approval",
             user: data
         })
     })
@@ -107,95 +126,59 @@ admins.post("/submitApproval", async (req, res) => {
     })
 })
 
-admins.post("/insertAdmin", async (req, res) => {
-    const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
-    .catch( (e) => {
-        return errorMessage(e, res)
-    })
-
-    if (pendingAdmin) {
-        await adminsModel.create(pendingAdmin.toObject())
-        .then(async (data) => {
-            await pendingApprovalsModel.deleteOne({ _id: req.body._id })
-    
-            return res.status(200).json({
-                status: 200,
-                msg: "Admin approved",
-                user: data
-            })
-        })
-        .catch((e) => {
-            return errorMessage(e, res)
-        })
-    }
-    else {
-        return res.status(404).json({
-            status: 404,
-            msg: "No pending admin with id:" + req.body._id
-        })
-    }
-})
-
-admins.post("/rejectAdmin", async (req, res) => {
-    const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
-    .catch( (e) => {
-        return errorMessage(e, res)
-    })
-    if(pendingAdmin) {
-        await pendingApprovalsModel.deleteOne({ _id: req.body._id })
-        .then(() => {
-            return res.status(200).json({
-                status: 200,
-                msg: "Admin rejected"
-            })
-        })
-        .catch( (e) => {
-            return errorMessage(e, res)
-        })
-    }
-    else {
-        return res.status(404).json({
-            status: 404,
-            msg: "No pending admin with id:" + req.body._id
-        })
-    }
-})
-
-
-const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	host: "smtp.gmail.com",
-	port: 465,
-	secure: true,
-	auth: {
-	  user: process.env.email,
-	  pass: process.env.google_app_password,
-	},
-});
-
 admins.post("/sendCode", async (req, res) => {
+    const email = req.body.email
 
-    const userEmail = req.body.email
-    const code = crypto.randomBytes(3).toString('hex')
+    const existingEmail = await signupCodesModel.findOne({ email: email })
+    .catch( (e) => {
+        return errorMessage(e, res)
+    })
+    if (existingEmail) {
+        await signupCodesModel.findOneAndDelete({ email: email })
+    }
+
+    // 6 is the current code length
+    const code = crypto.randomBytes(Math.ceil(6 * 3 / 4)).toString('base64').slice(0, 6).replace(/\+/g, '0').replace(/\//g, '0');
+    const currentTime = Date.now()
+    await signupCodesModel.create({ email: email, code: code, timestamp: currentTime})
+    .catch( (e) => {
+        return errorMessage(e, res)
+    })
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.email,
+          pass: process.env.google_app_password,
+        },
+    });
 
     transporter.sendMail({
 		from: {
-			name: 'jeff',
+			name: 'Securehold',
 			address: process.env.email
 		},
-		to: userEmail,
+		to: email,
 		subject: "Securehold Security Code",
 		text: "Your code is " + code,
 		html: `
         <table style="width: 100%; border: 5px solid black; border-radius: 20px; padding: 50px; text-align: center; font-family: 'Trebuchet MS';">
             <tr>
                 <td style=" font-size: 30px;">
-                    Your code is:
+                    Your code for registering is:
                 </td>
             </tr>
             <tr>
                 <td style="padding-top:20px; font-size: 40px; font-weight: bold;">
-                    '${code}'
+                    ${code}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top:50px; font-size: 15px">
+                    The code will last for 10 minutes, make sure to finish registration by then.
                 </td>
             </tr>
         </table>
@@ -206,8 +189,134 @@ admins.post("/sendCode", async (req, res) => {
 
     return res.status(200).json({
         status: 200,
-        msg: "Code sent to email",
-        email: userEmail,
-        code: code
+        error: "Code sent to email",
+        email: email,
+    })
+})
+
+
+admins.post("/sendForgetCode", async (req, res) => {
+    const email = req.body.email
+
+    const existingEmail = await forgetCodesModel.findOne({ email: email })
+    .catch( (e) => {
+        return errorMessage(e, res)
+    })
+    if (existingEmail) {
+        await forgetCodesModel.findOneAndDelete({ email: email })
+    }
+
+    const code = crypto.randomBytes(Math.ceil(6 * 3 / 4)).toString('base64').slice(0, 6).replace(/\+/g, '0').replace(/\//g, '0');
+    const currentTime = Date.now()
+    await forgetCodesModel.create({ email: email, code: code, timestamp: currentTime})
+    .catch( (e) => {
+        return errorMessage(e, res)
+    })
+
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.email,
+          pass: process.env.google_app_password,
+        },
+    });
+
+    transporter.sendMail({
+		from: {
+			name: 'Securehold',
+			address: process.env.email
+		},
+		to: email,
+		subject: "Securehold Security Code",
+		text: "Your code is " + code,
+		html: `
+        <table style="width: 100%; border: 5px solid black; border-radius: 20px; padding: 50px; text-align: center; font-family: 'Trebuchet MS';">
+            <tr>
+                <td style=" font-size: 30px;">
+                    Your code for resetting your password is:
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top:20px; font-size: 40px; font-weight: bold;">
+                    ${code}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top:50px; font-size: 15px">
+                    The code will last for 10 minutes, make sure to finish reset process by then.
+                </td>
+            </tr>
+        </table>
+    `})
+    .catch ( (e) => {
+        return errorMessage(e, res)
+    })
+
+    return res.status(200).json({
+        status: 200,
+        error: "Code sent to email",
+        email: email,
+    })
+})
+
+admins.post("/resetPassword", async (req,res) => {
+    const email = req.body.email
+    const password = req.body.password
+    const code = req.body.code
+
+    //email checking
+    const existingEmail = await adminsModel.findOne({ email: email })
+    .catch( (e) => {
+        return errorMessage(e, res)
+    })
+    if (!existingEmail) {
+        return res.status(200).json({
+            status: 409,
+            error: "Email not registered"
+        })
+    }
+    
+    //verification code check
+    const signupCodes = await forgetCodesModel.findOne( { email: email })
+    .catch( (e) => {
+        return errorMessage(e,res)
+    })
+    if (!signupCodes) {
+        return res.status(200).json({
+            status: 400,
+            msg: "Verification code was never sent"
+        })
+    }
+    if (signupCodes.code !== code) {
+        return res.status(200).json({
+            status: 401,
+            msg: "Verification code not matching"
+        })
+    }
+    const expiryTime = 10 * 60 * 1000
+    if ((Date.now() - signupCodes.timestamp) > expiryTime) {
+        return res.status(200).json({
+            status: 401,
+            msg: "Verification code expired"
+        })
+    }
+    await forgetCodesModel.findOneAndDelete({ email: email })
+
+    const salt = crypto.randomBytes(16).toString('hex')
+    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, `sha512`).toString('hex')
+
+    await adminsModel.findOneAndUpdate({email: email}, { $set: { hash: hash, salt: salt}})
+    .then((data) => {
+        return res.status(200).json({
+            status: 200,
+            error: "Admin password updated",
+            user: data
+        })
+    })
+    .catch((e) => {
+        return errorMessage(e, res)
     })
 })

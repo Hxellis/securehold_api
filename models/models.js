@@ -45,9 +45,24 @@ const pendingApprovalsSchema = new mongoose.Schema({
     salt: String,
 })
 
+const signupCodesSchema = new mongoose.Schema({
+    email: String,
+    code: String,
+    timestamp: Date
+})
+
+const forgetCodesSchema = new mongoose.Schema({
+    email: String,
+    code: String,
+    timestamp: Date
+})
+
+
 export const usersModel = mongoose.model("users", usersSchema)
 export const usersAppModel = mongoose.model("users_app", usersAppSchema)
 // export const lockerLocationsModel = mongoose.model("locker_locations", lockerLocationsSchema)
 // export const lockersModel = mongoose.model("lockers", lockersSchema)
 export const adminsModel = mongoose.model("admins", adminsSchema)
 export const pendingApprovalsModel = mongoose.model("pending_approvals", pendingApprovalsSchema)
+export const signupCodesModel = mongoose.model("signup_codes", signupCodesSchema)
+export const forgetCodesModel = mongoose.model("forget_codes", forgetCodesSchema)

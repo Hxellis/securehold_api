@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken'
 import { users } from  "./routes/users.js"
 import { usersApp } from "./routes/usersApp.js";
 import { admins } from "./routes/admins.js";
+import { dashboard } from './routes/dashboard.js'
 
 dotenv.config()
 const app = express();
@@ -94,6 +95,7 @@ app.post("/clearToken", (req,res) => {
 app.use("/users", middleware, users)
 app.use("/usersApp", usersApp)
 app.use("/admins", admins)
+app.use("/dashboard", dashboard)
 
 
 //database connection
