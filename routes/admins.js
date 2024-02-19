@@ -3,9 +3,9 @@ import { adminsModel, pendingApprovalsModel } from '../models/models.js'
 import crypto from 'crypto'
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
+import jwt from 'jsonwebtoken'
 
 dotenv.config()
-
 
 export const admins  = express.Router()
 
@@ -18,30 +18,41 @@ function errorMessage(msg, res) {
 }
 
 admins.post("/login", async (req, res) => {
-    await adminsModel.findOne({username: req.body.username})
-    .then( (user) => {
-        if (user) {
-            const inputPass = crypto.pbkdf2Sync(req.body.password, user.salt, 1000, 64, "sha512").toString('hex')
-            if (inputPass == user.hash) {
-                return res.status(200).json({
-                    status: 200,
-                    msg: "Login successful"
-                })
-            }
-            return  res.status(200).json({
-                status: 401,
-                msg: "Invalid Password"
-            })
-            
-        }
+    const user = await adminsModel.findOne({username: req.body.username})
+    .catch( (e) => {
+        return errorMessage(e, res)
+    })
+    if (!user) {
         //status 200 here to prevent frontend axios reading as API failed
         return res.status(200).json({
             status: 401,
             msg: "User not found"
         })
-    })
-    .catch( (e) => {
-        return errorMessage(e, res)
+    } 
+
+    const inputPass = crypto.pbkdf2Sync(req.body.password, user.salt, 1000, 64, "sha512").toString('hex')
+    if (inputPass == user.hash) {
+
+        const token = jwt.sign(user.toObject(), process.env.JWT_KEY, { expiresIn: '12h' })
+        
+        return res
+        .header('Access-Control-Allow-Credentials', true)
+        .cookie('access_token',token,{
+            expires: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            domain: 'localhost',
+            secure: true,
+            sameSite: 'none',
+        })
+        .status(200)
+        .json({
+            status: 200,
+            msg: "Login successful"
+        })
+    }
+    return  res.status(200).json({
+        status: 401,
+        msg: "Invalid Password"
     })
 })
 
@@ -61,7 +72,6 @@ admins.get("/getAllPendingApprovals", async (req, res) => {
 })
 
 admins.post("/submitApproval", async (req, res) => {
-
     const existingEmail = await adminsModel.findOne({ email: req.body.email })
     .catch( (e) => {
         return errorMessage(e, res)
@@ -127,16 +137,28 @@ admins.post("/insertAdmin", async (req, res) => {
 })
 
 admins.post("/rejectAdmin", async (req, res) => {
-    await pendingApprovalsModel.deleteOne({ _id: req.body._id })
-    .then(() => {
-        return res.status(200).json({
-            status: 200,
-            msg: "Admin rejected"
-        })
-    })
+    const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
     .catch( (e) => {
         return errorMessage(e, res)
     })
+    if(pendingAdmin) {
+        await pendingApprovalsModel.deleteOne({ _id: req.body._id })
+        .then(() => {
+            return res.status(200).json({
+                status: 200,
+                msg: "Admin rejected"
+            })
+        })
+        .catch( (e) => {
+            return errorMessage(e, res)
+        })
+    }
+    else {
+        return res.status(404).json({
+            status: 404,
+            msg: "No pending admin with id:" + req.body._id
+        })
+    }
 })
 
 

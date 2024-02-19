@@ -3,8 +3,9 @@ import multer from "multer";
 import mongoose from "mongoose";
 import cors from 'cors'
 import dotenv from 'dotenv'
+import cookieParser from "cookie-parser";
+import jwt from 'jsonwebtoken'
 
-import { dbTest } from "./routes/dbTest.js";
 import { users } from  "./routes/users.js"
 import { usersApp } from "./routes/usersApp.js";
 import { admins } from "./routes/admins.js";
@@ -15,7 +16,11 @@ const port = 3000;
 
 app.use(multer().array()); 
 app.use(express.static('public'));
-app.use(cors())
+app.use(cors({
+	origin: 'http://127.0.0.1:5500',
+  	credentials: true,
+}))
+app.use(cookieParser())
 
 //middleware
 function middleware(req, res, next) {
@@ -33,8 +38,59 @@ app.get("/", (req, res) => {
 	});
 });
 
+// app.get("/setToken", (req, res) => {
+// 	console.log("emd me")
+// 	return res
+// 	.header('Access-Control-Allow-Credentials', true)
+// 	.cookie('test',"ihbdsauhbdsahbus",{
+// 		expires: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
+// 		httpOnly: true,
+// 		domain: 'localhost',
+// 		secure: true,
+// 		sameSite: 'none',
+// 	})
+// 	.send('Cookie set successfully');
+
+// });
+
+app.get("/checkToken", (req, res) => {
+	const token = req.cookies.access_token;
+	if (!token) {
+		return res.status(200).send({
+			status: 403,
+			msg: "No access token found"
+		});
+	}
+	try {
+		const decodedToken = jwt.verify(token, process.env.JWT_KEY)
+		return res.status(200).json({
+			status: 200,
+			msg: "User has session",
+			user: decodedToken,
+		});
+	}
+	catch (e) {
+		return res.status(200).json({
+			status: 403,
+			msg: "User loss session",
+		})
+	}
+})
+
+app.post("/clearToken", (req,res) => {
+	const tokenName = req.body.tokenName
+	if (tokenName) {
+		return res.clearCookie(tokenName).status(200).json({
+			status: 200,
+			msg: "Token Cleared",
+		})
+
+	}
+})
+
+
 //set route
-app.use("/dbTest", middleware, dbTest); //middleware declaration must be before the api
+//(path, middleware, api)
 app.use("/users", middleware, users)
 app.use("/usersApp", usersApp)
 app.use("/admins", admins)
