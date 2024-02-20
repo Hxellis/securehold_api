@@ -4,19 +4,22 @@ import crypto from 'crypto'
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
+import errorMessage from "../apiErrorMessage.js";
 
 dotenv.config()
 
 export const admins  = express.Router()
 
-function errorMessage(error, res) {
-    console.log("error: " + error)
-    res.status(400).json({
-        status: 400,
-        msg: "API error",
-        error: error
-    })
-}
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.email,
+      pass: process.env.google_app_password,
+    },
+});
 
 admins.post("/login", async (req, res) => {
     const user = await adminsModel.findOne({username: req.body.username})
@@ -143,18 +146,7 @@ admins.post("/sendCode", async (req, res) => {
     await signupCodesModel.create({ email: email, code: code, timestamp: currentTime})
     .catch( (e) => {
         return errorMessage(e, res)
-    })
-
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: {
-          user: process.env.email,
-          pass: process.env.google_app_password,
-        },
-    });
+    }) 
 
     transporter.sendMail({
 		from: {
@@ -212,17 +204,6 @@ admins.post("/sendForgetCode", async (req, res) => {
     .catch( (e) => {
         return errorMessage(e, res)
     })
-
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: {
-          user: process.env.email,
-          pass: process.env.google_app_password,
-        },
-    });
 
     transporter.sendMail({
 		from: {

@@ -10,6 +10,7 @@ import { users } from  "./routes/users.js"
 import { usersApp } from "./routes/usersApp.js";
 import { admins } from "./routes/admins.js";
 import { dashboard } from './routes/dashboard.js'
+import { annoucements } from "./routes/annoucements.js";
 
 dotenv.config()
 const app = express();
@@ -38,21 +39,6 @@ app.get("/", (req, res) => {
 		msg: "securehold API accessed",
 	});
 });
-
-// app.get("/setToken", (req, res) => {
-// 	console.log("emd me")
-// 	return res
-// 	.header('Access-Control-Allow-Credentials', true)
-// 	.cookie('test',"ihbdsauhbdsahbus",{
-// 		expires: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
-// 		httpOnly: true,
-// 		domain: 'localhost',
-// 		secure: true,
-// 		sameSite: 'none',
-// 	})
-// 	.send('Cookie set successfully');
-
-// });
 
 app.get("/checkToken", (req, res) => {
 	const token = req.cookies.access_token;
@@ -96,7 +82,7 @@ app.use("/users", middleware, users)
 app.use("/usersApp", usersApp)
 app.use("/admins", admins)
 app.use("/dashboard", dashboard)
-
+app.use("/annoucements", annoucements)
 
 //database connection
 await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")

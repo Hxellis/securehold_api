@@ -1,6 +1,7 @@
 import express from "express";
 import { pendingApprovalsModel } from '../models/models.js'
 import dotenv from 'dotenv'
+import errorMessage from "../apiErrorMessage.js";
 
 dotenv.config()
 

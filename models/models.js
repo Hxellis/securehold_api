@@ -36,6 +36,8 @@ const adminsSchema = new mongoose.Schema({
     email: String,
     hash: String,
     salt: String,
+    profile_picture: { type: String, default: null},
+    registered_date: Date
 })
 
 const pendingApprovalsSchema = new mongoose.Schema({
@@ -57,6 +59,13 @@ const forgetCodesSchema = new mongoose.Schema({
     timestamp: Date
 })
 
+const annoucementsSchema = new mongoose.Schema({
+    title: String,
+    content: String,
+    admin: { type: mongoose.Schema.Types.ObjectId, ref: "admins"},
+    timestamp: Date
+})
+
 
 export const usersModel = mongoose.model("users", usersSchema)
 export const usersAppModel = mongoose.model("users_app", usersAppSchema)
@@ -66,3 +75,4 @@ export const adminsModel = mongoose.model("admins", adminsSchema)
 export const pendingApprovalsModel = mongoose.model("pending_approvals", pendingApprovalsSchema)
 export const signupCodesModel = mongoose.model("signup_codes", signupCodesSchema)
 export const forgetCodesModel = mongoose.model("forget_codes", forgetCodesSchema)
+export const annoucementsModel = mongoose.model('annoucements', annoucementsSchema)
