@@ -25,7 +25,6 @@ annoucements.get("/getAllAnnoucements", async (req, res) => {
         }
         return newObj
     }))
-    console.log(alteredData)
 
     return res.status(200).json({
         status: 200,
@@ -35,8 +34,6 @@ annoucements.get("/getAllAnnoucements", async (req, res) => {
 })
 
 annoucements.post("/insertAnnoucement", async (req, res) => {
-    console.log("enteredthis bitch")
-
     const title = req.body.title
     const content = req.body.content
     const admin = new mongoose.Types.ObjectId("65cc77c59d4fac492154f424")
@@ -51,5 +48,20 @@ annoucements.post("/insertAnnoucement", async (req, res) => {
     })
     .catch((e) => {
         errorMessage(e, res)
+    })
+})
+
+annoucements.post("/deleteAnnoucement", async (req, res) => {
+    const _id = req.body._id
+
+    await annoucementsModel.deleteOne({ _id: _id})
+    .then(() => {
+        return res.status(200).json({
+            status: 200,
+            msg: "Annoucement deleted"
+        })
+    })
+    .catch( (e) => {
+        return errorMessage(e, res)
     })
 })
