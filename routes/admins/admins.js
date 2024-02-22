@@ -43,6 +43,7 @@ admins.post("/login", async (req, res) => {
         const token = jwt.sign(signUser, process.env.JWT_KEY, { expiresIn: '12h' })
         return res
         .header('Access-Control-Allow-Credentials', true)
+        .setHeader('Cache-Control', 'no-store')
         .cookie('access_token',token,{
             expires: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
             httpOnly: true,

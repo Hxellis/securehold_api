@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import cors from 'cors'
 import dotenv from 'dotenv'
 import cookieParser from "cookie-parser";
+import session from "express-session";
 import jwt from 'jsonwebtoken'
 
 import { users } from  "./routes/users/users.js"
@@ -23,6 +24,11 @@ app.use(cors({
   	credentials: true,
 }))
 app.use(cookieParser())
+// app.use( session({
+// 	secret: process.env.SESSION_KEY,
+// 	// resave: false,
+// 	// saveUninitialized: false
+// }))
 
 //sample get
 app.get("/", (req, res) => {

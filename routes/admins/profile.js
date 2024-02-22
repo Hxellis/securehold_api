@@ -12,12 +12,12 @@ dotenv.config()
 export const profile  = express.Router()
 
 function signJWT(data, res) {
-    
     const signUser = data.toObject()
     const token = jwt.sign(signUser, process.env.JWT_KEY, { expiresIn: '12h' } )
-    
+
     return res
     .header('Access-Control-Allow-Credentials', true)
+    .setHeader('Cache-Control', 'no-store')
     .cookie('access_token',token,{
         expires: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
         httpOnly: true,
@@ -32,6 +32,7 @@ function signJWT(data, res) {
         error: "Profile Updated",
         admin: data
     })
+     
 }
 
 profile.post("/changeAdminData", multer().array(), async (req, res) => {
@@ -43,7 +44,7 @@ profile.post("/changeAdminData", multer().array(), async (req, res) => {
     const updateObj = username ? { username: username} : email ? {email: email} : null
 
     if (updateObj) {
-        await adminsModel.findOneAndUpdate({ _id: _id}, { $set: updateObj}, { projection: { hash: false, salt: false}})
+        await adminsModel.findOneAndUpdate({ _id: _id}, { $set: updateObj}, { projection: { hash: false, salt: false}, new: true})
         .then( (data) => {
             return signJWT(data, res)
         })
@@ -74,7 +75,7 @@ profile.post("/changePassword", multer().array(), async (req, res) => {
             const newSalt = crypto.randomBytes(16).toString('hex')
             const newHash = crypto.pbkdf2Sync(newPassword, newSalt, 1000, 64, `sha512`).toString('hex')
 
-            await adminsModel.findOneAndUpdate({ _id: admin._id}, { $set: { hash: newHash, salt: newSalt}}, { projection: { hash: false, salt:false }})
+            await adminsModel.findOneAndUpdate({ _id: admin._id}, { $set: { hash: newHash, salt: newSalt}}, { projection: { hash: false, salt:false }, new: true})
             .then((data) => {
                 return signJWT(data, res)
             })
@@ -118,15 +119,10 @@ profile.post("/changeProfilePicture", upload.array('image'), async (req, res) =>
         console.log(result);
 
         const _id = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id
-        await adminsModel.findOneAndUpdate({ _id: _id }, {$set: { profile_picture: result.secure_url}})
+        const newAdminData = await adminsModel.findOneAndUpdate({ _id: _id }, {$set: { profile_picture: result.secure_url}}, {  projection: { hash: false, salt:false }, new: true})
         .catch( (e) => {
             return errorMessage(e, res);
         })
-
-        return res.status(200).json({
-            stauts: 200,
-            msg: "Profile Picture Updated",
-            imgUrl: result.secure_url
-        });
+        return signJWT(newAdminData, res)
     }).end(buffer);
 })
