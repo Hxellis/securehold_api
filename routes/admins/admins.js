@@ -1,10 +1,10 @@
 import express from "express";
-import { adminsModel, pendingApprovalsModel, signupCodesModel, forgetCodesModel } from '../models/models.js'
+import { adminsModel, pendingApprovalsModel, signupCodesModel, forgetCodesModel } from '../../models/models.js'
 import crypto from 'crypto'
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
-import errorMessage from "../apiErrorMessage.js";
+import errorMessage from "../../apiErrorMessage.js";
 
 dotenv.config()
 
@@ -37,8 +37,10 @@ admins.post("/login", async (req, res) => {
     const inputPass = crypto.pbkdf2Sync(req.body.password, user.salt, 1000, 64, "sha512").toString('hex')
     if (inputPass == user.hash) {
 
-        const token = jwt.sign(user.toObject(), process.env.JWT_KEY, { expiresIn: '12h' })
-        
+        const signUser = user.toObject()
+        delete signUser.hash
+        delete signUser.salt
+        const token = jwt.sign(signUser, process.env.JWT_KEY, { expiresIn: '12h' })
         return res
         .header('Access-Control-Allow-Credentials', true)
         .cookie('access_token',token,{
@@ -59,8 +61,6 @@ admins.post("/login", async (req, res) => {
         error: "Invalid Password"
     })
 })
-
-
 
 admins.post("/submitApproval", async (req, res) => {
     const username = req.body.username
@@ -301,3 +301,4 @@ admins.post("/resetPassword", async (req,res) => {
         return errorMessage(e, res)
     })
 })
+

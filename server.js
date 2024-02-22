@@ -6,31 +6,23 @@ import dotenv from 'dotenv'
 import cookieParser from "cookie-parser";
 import jwt from 'jsonwebtoken'
 
-import { users } from  "./routes/users.js"
-import { usersApp } from "./routes/usersApp.js";
-import { admins } from "./routes/admins.js";
-import { dashboard } from './routes/dashboard.js'
-import { annoucements } from "./routes/annoucements.js";
+import { users } from  "./routes/users/users.js"
+import { usersApp } from "./routes/users/usersApp.js";
+import { admins } from "./routes/admins/admins.js";
+import { dashboard } from './routes/admins/dashboard.js'
+import { annoucements } from "./routes/admins/annoucements.js";
+import { profile } from "./routes/admins/profile.js";
 
 dotenv.config()
 const app = express();
 const port = 3000;
 
-app.use(multer().array()); 
 app.use(express.static('public'));
 app.use(cors({
 	origin: 'http://127.0.0.1:5500',
   	credentials: true,
 }))
 app.use(cookieParser())
-
-//middleware
-function middleware(req, res, next) {
-    console.log(req.originalUrl)
-    next()
-}
-// set middleware for all (must be above all APIs)
-// app.use(middleware)
 
 //sample get
 app.get("/", (req, res) => {
@@ -64,30 +56,33 @@ app.get("/checkToken", (req, res) => {
 	}
 })
 
-app.post("/clearToken", (req,res) => {
-	const tokenName = req.body.tokenName
-	if (tokenName) {
-		return res.clearCookie(tokenName).status(200).json({
-			status: 200,
-			msg: "Token Cleared",
-		})
 
-	}
+app.get("/clearToken", (req,res) => {
+	return res.clearCookie("access_token", {
+		httpOnly: true,
+        domain: 'localhost',
+        secure: true,
+        sameSite: 'none',
+	}).status(200).json({
+		status: 200,
+		msg: "Token Cleared",
+	})
 })
 
 
 //set route
 //(path, middleware, api)
-app.use("/users", middleware, users)
-app.use("/usersApp", usersApp)
-app.use("/admins", admins)
-app.use("/dashboard", dashboard)
-app.use("/annoucements", annoucements)
+// app.use("/users", middleware, users)
+// app.use("/usersApp", usersApp)
+app.use("/admins/admins", multer().array(), admins)
+app.use("/admins/dashboard", multer().array(), dashboard)
+app.use("/admins/annoucements", multer().array(), annoucements)
+app.use("/admins/profile", profile)
 
 //database connection
 await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")
 .then(() => {
-	console.log('Connected to MongoDB');
+	console.log('Connected to MongoDB'); 
 })
 .catch((error) => {
 	console.error('Error connecting to MongoDB:', error);

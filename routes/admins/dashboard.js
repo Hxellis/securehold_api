@@ -1,7 +1,7 @@
 import express from "express";
-import { pendingApprovalsModel } from '../models/models.js'
+import { pendingApprovalsModel, adminsModel } from '../../models/models.js'
 import dotenv from 'dotenv'
-import errorMessage from "../apiErrorMessage.js";
+import errorMessage from "../../apiErrorMessage.js";
 
 dotenv.config()
 
@@ -29,7 +29,7 @@ dashboard.post("/insertAdmin", async (req, res) => {
     })
 
     if (pendingAdmin) {
-        await dashboardModel.create(pendingAdmin.toObject())
+        await adminsModel.create(pendingAdmin.toObject())
         .then(async (data) => {
             await pendingApprovalsModel.deleteOne({ _id: req.body._id })
     

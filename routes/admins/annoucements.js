@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
-import { annoucementsModel, adminsModel } from "../models/models.js";
-import errorMessage from "../apiErrorMessage.js";
+import { annoucementsModel, adminsModel } from "../../models/models.js";
+import errorMessage from "../../apiErrorMessage.js";
 
 export const annoucements  = express.Router()
 

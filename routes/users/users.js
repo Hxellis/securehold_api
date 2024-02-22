@@ -1,6 +1,6 @@
 import express from 'express'
 import mongoose from 'mongoose'
-import { usersModel } from '../models/models.js'
+import { usersModel } from '../../models/models.js'
 
 export const users  = express.Router()
 

@@ -36,7 +36,7 @@ const adminsSchema = new mongoose.Schema({
     email: String,
     hash: String,
     salt: String,
-    profile_picture: { type: String, default: null},
+    profile_picture: { type: String, default: null },
     registered_date: Date
 })
 
