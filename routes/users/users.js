@@ -13,18 +13,21 @@ users.get("/", (req, res) => {
 
 //get all users
 users.get("/getAllUsers", async (req, res) => {
-    await usersModel.find()
+    await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false })
     .then((data) => {
+
         res.status(200).json({
-            msg: data
-        })
+            status: 200,
+            msg: "User data retrieved",
+            userData: data
+        });
     })
     .catch((e) => {
         res.status(400).json({
             status: 400,
             msg: e
-        })
-    })
+        });
+    });
 })
 
 //insert a user

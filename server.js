@@ -8,7 +8,6 @@ import session from "express-session";
 import jwt from 'jsonwebtoken'
 
 import { users } from  "./routes/users/users.js"
-import { usersApp } from "./routes/users/usersApp.js";
 import { admins } from "./routes/admins/admins.js";
 import { dashboard } from './routes/admins/dashboard.js'
 import { annoucements } from "./routes/admins/annoucements.js";
@@ -78,8 +77,7 @@ app.get("/clearToken", (req,res) => {
 
 //set route
 //(path, middleware, api)
-// app.use("/users", middleware, users)
-// app.use("/usersApp", usersApp)
+app.use("/users/users", multer().array(), users)
 app.use("/admins/admins", multer().array(), admins)
 app.use("/admins/dashboard", multer().array(), dashboard)
 app.use("/admins/annoucements", multer().array(), annoucements)
