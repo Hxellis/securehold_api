@@ -61,10 +61,11 @@ const lockersLocationSchema = new mongoose.Schema({
     city: String,
     address: String,
     status: { type: Number, enum: [0,1,2]},
-    lockers: [{ type: mongoose.Schema.Types.ObjectId, ref: "lockers"}]
+    // lockers: [{ type: mongoose.Schema.Types.ObjectId, ref: "lockers"}]
 })
 
 const lockersSchema = new mongoose.Schema({
+    location: { type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
     occupied_by: { type: mongoose.Schema.Types.ObjectId, ref: "users", default: null},
     door_status: Boolean,
     open_count: Number,
@@ -74,9 +75,8 @@ const lockersSchema = new mongoose.Schema({
 
 
 export const usersModel = mongoose.model("users", usersSchema)
-// export const usersAppModel = mongoose.model("users_app", usersAppSchema)
-// export const lockerLocationsModel = mongoose.model("locker_locations", lockerLocationsSchema)
-// export const lockersModel = mongoose.model("lockers", lockersSchema)
+export const lockerLocationsModel = mongoose.model("locker_locations", lockersLocationSchema)
+export const lockersModel = mongoose.model("lockers", lockersSchema)
 export const adminsModel = mongoose.model("admins", adminsSchema)
 export const pendingApprovalsModel = mongoose.model("pending_approvals", pendingApprovalsSchema)
 export const signupCodesModel = mongoose.model("signup_codes", signupCodesSchema)

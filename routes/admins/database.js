@@ -1,6 +1,6 @@
 import express from 'express'
 import mongoose from 'mongoose'
-import { usersModel } from '../../models/models.js'
+import { usersModel, lockersModel, lockerLocationsModel } from '../../models/models.js'
 import errorMessage from '../../apiErrorMessage.js'
 
 export const database  = express.Router()
@@ -29,22 +29,46 @@ function formatDatabaseObject(obj) {
     return formattedObj
 }
 
-//get all users
 database.get("/getAllUsers", async (req, res) => {
     await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false })
     .then((data) => {
-
         res.status(200).json({
             status: 200,
             msg: "User data retrieved",
             userData: data
         });
     })
-    .catch((e) => {
-        res.status(400).json({
-            status: 400,
-            msg: e
+    .catch((e) => { 
+        return errorMessage(e, res) 
+    });
+})
+
+database.post("/getAllLockers", async (req, res) => {
+    const _id = req.body._id
+    await lockersModel.find({ location: _id })
+    .then((data) => {
+        res.status(200).json({
+            status: 200,
+            msg: "Locker data retrieved",
+            lockerData: data
         });
+    })
+    .catch((e) => { 
+        return errorMessage(e, res) 
+    });
+})
+
+database.get("/getAllLockerLocations", async (req, res) => {
+    await lockerLocationsModel.find({})
+    .then((data) => {
+        res.status(200).json({
+            status: 200,
+            msg: "Locker Location data retrieved",
+            lockerLocationData: data
+        });
+    })
+    .catch((e) => { 
+        return errorMessage(e, res) 
     });
 })
 
