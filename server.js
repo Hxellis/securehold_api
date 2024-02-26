@@ -12,6 +12,7 @@ import { admins } from "./routes/admins/admins.js";
 import { dashboard } from './routes/admins/dashboard.js'
 import { annoucements } from "./routes/admins/annoucements.js";
 import { profile } from "./routes/admins/profile.js";
+import { database } from "./routes/admins/database.js";
 
 dotenv.config()
 const app = express();
@@ -81,7 +82,8 @@ app.use("/users/users", multer().array(), users)
 app.use("/admins/admins", multer().array(), admins)
 app.use("/admins/dashboard", multer().array(), dashboard)
 app.use("/admins/annoucements", multer().array(), annoucements)
-app.use("/admins/profile", profile)
+app.use("/admins/profile", profile) // custom multer middleware cause image uploading
+app.use("/admins/database", multer().array(), database)
 
 //database connection
 await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")

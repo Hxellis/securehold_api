@@ -56,8 +56,8 @@ const usersSchema = new mongoose.Schema({
     register_date: Date
 })
 
-
 const lockersLocationSchema = new mongoose.Schema({
+    name: String,
     city: String,
     address: String,
     status: { type: Number, enum: [0,1,2]},
