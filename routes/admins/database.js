@@ -9,11 +9,16 @@ function formatDatabaseObject(obj) {
     const formattedObj = obj
 
     for (const [key, value] of Object.entries(formattedObj)) {
+        
         if (!value) {
-            delete formattedObj[key];
-            continue;
+            if (key == "occupied_by") {
+                formattedObj[key] = null
+            }
+            else {
+                delete formattedObj[key];
+            }
         }
-        if(key.includes(".")){
+        else if(key.includes(".")){
             const newObjKeys = key.split('.');
             let newObj = value
 
@@ -76,11 +81,18 @@ database.post("/insertDb", async (req, res) => {
     const db = req.body.db
     delete req.body.db
 
+    const location = req.body.location
+    delete req.body.location
+
     const newData = formatDatabaseObject(req.body)
 
     try {
         if (db == "users") { 
             await usersModel.create(newData) 
+        }
+        else if ( db == "lockers") {
+            newData.location = location
+            await lockersModel.create(newData)
         }
 
         return res.status(200).json({
@@ -110,11 +122,15 @@ database.post("/editDb", async (req, res) => {
 
     const _id = req.body._id
     delete req.body._id
+
     const editData = formatDatabaseObject(req.body)
     console.log("dasdasfasf")
     try {
         if ( db == "users") {
             await usersModel.findOneAndUpdate({ _id: _id},{ $set: editData })
+        }
+        else if ( db == "lockers" ) {
+            await lockersModel.findOneAndUpdate( { _id: _id }, { $set: editData})
         }
         return res.status(200).json({
             status: 200,
@@ -134,6 +150,9 @@ database.post("/deleteDb", async (req, res) => {
     try {
         if ( db == "users") {
             await usersModel.deleteOne({_id: _id})
+        }
+        else if ( db== "lockers") {
+            await lockersModel.deleteOne( {_id: _id})
         }
         return res.status(200).json({
             status: 200,

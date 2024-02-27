@@ -67,10 +67,10 @@ const lockersLocationSchema = new mongoose.Schema({
 const lockersSchema = new mongoose.Schema({
     location: { type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
     occupied_by: { type: mongoose.Schema.Types.ObjectId, ref: "users", default: null},
-    door_status: Boolean,
-    open_count: Number,
-    usage_minutes: Number,
-    last_used: Date
+    door_status: { type: Boolean, default: false},
+    open_count: { type: Number, default: 0},
+    usage_minutes: { type: Number, default: 0},
+    last_used: { type: Date, default: null}
 })
 
 
