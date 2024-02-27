@@ -50,7 +50,7 @@ database.get("/getAllUsers", async (req, res) => {
 
 database.post("/getAllLockers", async (req, res) => {
     const _id = req.body._id
-    await lockersModel.find({ location: _id })
+    await lockersModel.find({ location: _id }).populate("occupied_by")
     .then((data) => {
         res.status(200).json({
             status: 200,
