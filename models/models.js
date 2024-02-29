@@ -31,6 +31,7 @@ const forgetCodesSchema = new mongoose.Schema({
 })
 
 const annoucementsSchema = new mongoose.Schema({
+    type: { type: String, enum: ["users", "lockers"]},
     title: String,
     content: String,
     admin: { type: mongoose.Schema.Types.ObjectId, ref: "admins"},
@@ -40,11 +41,12 @@ const annoucementsSchema = new mongoose.Schema({
 const usersSchema = new mongoose.Schema({
     name: String,
     dob: Date,
-    nric_passport: String,
-    phone: String,
-    locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
+    nric_passport: { type: String, unique: true},
+    phone: { type: String, unique: true},
+    locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers", unique: true},
     web_data: {
-        user_id: { type: String, default: null},
+        username: { type: String, default: null},
+        email: { type: String, default: null, unique: true},
         hash: { type: String, default: null },
         salt: { type: String, default: null}
     },
@@ -53,7 +55,12 @@ const usersSchema = new mongoose.Schema({
         face: String,
         fingerprint: String
     },
-    register_date: Date
+    recent_activity: [{ 
+        activity: String,
+        timestamp: Date
+    }],
+    register_date: Date,
+    last_login: Date
 })
 
 const lockersLocationSchema = new mongoose.Schema({
@@ -73,6 +80,11 @@ const lockersSchema = new mongoose.Schema({
     last_used: { type: Date, default: null}
 })
 
+const notifyAdminSchema = new mongoose.Schema({
+    message: String,
+    user: { type: mongoose.Types.ObjectId, ref: 'users'}
+})
+
 
 export const usersModel = mongoose.model("users", usersSchema)
 export const lockerLocationsModel = mongoose.model("locker_locations", lockersLocationSchema)
@@ -82,3 +94,4 @@ export const pendingApprovalsModel = mongoose.model("pending_approvals", pending
 export const signupCodesModel = mongoose.model("signup_codes", signupCodesSchema)
 export const forgetCodesModel = mongoose.model("forget_codes", forgetCodesSchema)
 export const annoucementsModel = mongoose.model('annoucements', annoucementsSchema)
+export const notifyAdminModel = mongoose.model('notify_admin', notifyAdminSchema)

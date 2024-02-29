@@ -4,34 +4,42 @@ import mongoose from "mongoose";
 import cors from 'cors'
 import dotenv from 'dotenv'
 import cookieParser from "cookie-parser";
-import session from "express-session";
 import jwt from 'jsonwebtoken'
 
-import { users } from  "./routes/users/users.js"
 import { admins } from "./routes/admins/admins.js";
 import { dashboard } from './routes/admins/dashboard.js'
 import { annoucements } from "./routes/admins/annoucements.js";
 import { profile } from "./routes/admins/profile.js";
 import { database } from "./routes/admins/database.js";
+import { users } from  "./routes/users/users.js"
+import { usersApp } from "./routes/users/usersApp.js";
 
 dotenv.config()
 const app = express();
 const port = 3000;
 
 app.use(express.static('public'));
-app.use(cors({
-	origin: 'http://127.0.0.1:5500',
-  	credentials: true,
-}))
 app.use(cookieParser())
-// app.use( session({
-// 	secret: process.env.SESSION_KEY,
-// 	// resave: false,
-// 	// saveUninitialized: false
-// }))
+app.use(cors({
+	// origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'],
+  	// origin: '*',
+	origin:  (origin, callback) => {
+		// Check if the request comes from an allowed origin
+		// For simplicity, you might want to implement a more secure check
+		const allowedOrigins = ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'];
+		
+		if (!origin || allowedOrigins.includes(origin)) {
+		  callback(null, true);
+		} else {
+		  callback(new Error('Not allowed by CORS'));
+		}
+	  },
+	credentials: true,
+}))
 
 //sample get
 app.get("/", (req, res) => {
+	console.log("hi")
 	res.status(200).json({
 		status: 200,
 		msg: "securehold API accessed",
@@ -62,7 +70,6 @@ app.get("/checkToken", (req, res) => {
 	}
 })
 
-
 app.get("/clearToken", (req,res) => {
 	return res.clearCookie("access_token", {
 		httpOnly: true,
@@ -78,12 +85,13 @@ app.get("/clearToken", (req,res) => {
 
 //set route
 //(path, middleware, api)
-app.use("/users/users", multer().array(), users)
 app.use("/admins/admins", multer().array(), admins)
 app.use("/admins/dashboard", multer().array(), dashboard)
 app.use("/admins/annoucements", multer().array(), annoucements)
 app.use("/admins/profile", profile) // custom multer middleware cause image uploading
 app.use("/admins/database", multer().array(), database)
+app.use("/users/users", multer().array(), users)
+app.use("/users/usersApp", multer().array(), usersApp)
 
 //database connection
 await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")

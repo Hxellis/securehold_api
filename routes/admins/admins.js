@@ -176,14 +176,15 @@ admins.post("/sendCode", async (req, res) => {
             </tr>
         </table>
     `})
+    .then( () => {
+        return res.status(200).json({
+            status: 200,
+            error: "Code sent to email",
+            email: email,
+        })
+    })
     .catch ( (e) => {
         return errorMessage(e, res)
-    })
-
-    return res.status(200).json({
-        status: 200,
-        error: "Code sent to email",
-        email: email,
     })
 })
 

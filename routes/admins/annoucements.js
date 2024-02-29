@@ -36,10 +36,10 @@ annoucements.get("/getAllAnnoucements", async (req, res) => {
 annoucements.post("/insertAnnoucement", async (req, res) => {
     const title = req.body.title
     const content = req.body.content
-    const admin = new mongoose.Types.ObjectId("65cc77c59d4fac492154f424")
+    const admin = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id
     const timestamp = Date.now()
 
-    await annoucementsModel.create({ title: title, content: content, admin: admin, timestamp: timestamp})
+    await annoucementsModel.create({ title: title, content: content, admin: new mongoose.Types.ObjectId(admin), timestamp: timestamp})
     .then(() => {
         return res.status(200).json({
             status: 200,
