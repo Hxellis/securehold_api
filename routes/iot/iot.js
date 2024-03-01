@@ -1,7 +1,6 @@
 import express from 'express'
-import { usersModel, signupCodesModel, forgetCodesModel, annoucementsModel, lockersModel } from '../../models/models.js'
+import { usersModel, annoucementsModel, lockersModel, lockerLocationsModel } from '../../models/models.js'
 import errorMessage from '../../apiErrorMessage.js'
-import crypto from 'crypto'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -52,11 +51,12 @@ iot.post("/assignLocker", async (req, res) => {
 
         if (locker) {
             await lockersModel.findOneAndUpdate({ _id: locker._id }, { $set: { occupied_by: userId}})
-            await usersModel.findOneAndUpdate( { _id: userId}, { locker_id: locker._id })
+            await usersModel.findOneAndUpdate( { _id: userId}, { $set: { locker_id: locker._id } })
 
             return res.status(200).json({
                 status: 200,
-                msg: "Locker assigned"
+                msg: "Locker assigned",
+                lockerId: locker._id
             })
         }
         else {
@@ -100,9 +100,51 @@ iot.post("/terminateLocker", async (req, res) => {
 
 iot.post("/updateLockerStatus", async (req, res) => {
     try {
+        const lockerId = req.body.lockerId
+        const doorOpen = req.body.doorOpen
 
+        if (doorOpen) {
+            await lockersModel.findOneAndUpdate({ _id: lockerId }, { $set: { door_status: true, last_used: Date.now() }, $inc: { open_count: 1}})
+        }
+        else {
+            const locker = await lockersModel.findOne({ _id: lockerId})
+            const useTime = (Date.now() - locker.last_used) / (1000 * 60)
+            await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false}, $inc: { usage_minutes: useTime}} )
+        }
+
+        return res.status(200).json({
+            status: 200,
+            msg: "Locker updated"
+        })
     }
     catch (e) {
+        return errorMessage(e, res)
+    }
+})
 
+iot.post("/updateLocationStatus", async (req, res) => {
+    try {
+        const locationId = req.body.locationId
+        const status = req.body.status
+
+        if (status == 1 ) {
+            await lockerLocationsModel.findOneAndUpdate({ _id: locationId }, { $set: { status: status, last_active: Date.now() }})        
+        }
+        else if (status == 0) {
+            const locker = await lockerLocationsModel.findOne({ _id: locationId })
+            const useTime = (Date.now() - locker.last_used) / (1000 * 60 * 60)
+            await lockerLocationsModel.findByIdAndUpdate({ _id: locationId }, { $set: { status: status}, $inc: { active_hours: useTime }})
+        }
+        else if ( status == 2) {
+            await lockerLocationsModel.findOneAndUpdate({ _id: locationId }, { $set: { status: status }})        
+        }
+
+        return res.status(200).json({
+            status: 200,
+            msg: "Location updated"
+        })
+    }
+    catch (e) {
+        return errorMessage(e, res)
     }
 })
