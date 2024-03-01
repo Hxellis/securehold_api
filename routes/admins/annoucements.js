@@ -2,6 +2,10 @@ import express from "express";
 import mongoose from "mongoose";
 import { annoucementsModel, adminsModel } from "../../models/models.js";
 import errorMessage from "../../apiErrorMessage.js";
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 export const annoucements  = express.Router()
 

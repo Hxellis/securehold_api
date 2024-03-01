@@ -13,6 +13,7 @@ import { profile } from "./routes/admins/profile.js";
 import { database } from "./routes/admins/database.js";
 import { users } from  "./routes/users/users.js"
 import { usersApp } from "./routes/users/usersApp.js";
+import { iot } from "./routes/iot/iot.js";
 
 dotenv.config()
 const app = express();
@@ -92,6 +93,7 @@ app.use("/admins/profile", profile) // custom multer middleware cause image uplo
 app.use("/admins/database", multer().array(), database)
 app.use("/users/users", multer().array(), users)
 app.use("/users/usersApp", multer().array(), usersApp)
+app.use("/iot/iot", express.json(), iot)
 
 //database connection
 await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")
@@ -101,7 +103,6 @@ await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + proces
 .catch((error) => {
 	console.error('Error connecting to MongoDB:', error);
 });
-
 
 //establish port
 app.listen(port, () => {
