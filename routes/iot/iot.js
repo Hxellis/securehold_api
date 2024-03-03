@@ -16,7 +16,7 @@ iot.get("/testApi", async (req, res) => {
 })
 
 iot.get("/getAnnouncements", async (req, res) => {
-    await annoucementsModel.find({ type: "locker"})
+    await annoucementsModel.find({ type: "Lockers"})
     .then ( (resp) => {
         return res.status(200).json({
             status: 200,

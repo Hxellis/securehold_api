@@ -7,28 +7,27 @@ export const database  = express.Router()
 
 function formatDatabaseObject(obj) {
     const formattedObj = obj
+    const excludedFields = ["occupied_by"]
 
     for (const [key, value] of Object.entries(formattedObj)) {
         
         if (!value) {
-            if (key == "occupied_by") {
+            if (excludedFields.includes(key)) {
                 formattedObj[key] = null
             }
             else {
                 delete formattedObj[key];
             }
         }
-        else if(key.includes(".")){
-            const newObjKeys = key.split('.');
-            let newObj = value
+        // else if(key.includes(".")){
+        //     const newObjKeys = key.split('.');
 
-
-            for (let i = newObjKeys.length - 1; i >= 0; i--) {
-                newObj = { [newObjKeys[i]]: newObj };
-            }
-            delete formattedObj[key]
-            Object.assign(formattedObj, newObj)
-        }
+        //     if ( formattedObj[newObjKeys[0]]) {
+        //         console.log("enter", newObjKeys[0])
+        //         formattedObj[newObjKeys[0]][newObjKeys[1]] = value
+        //     }
+       
+        // }
     }
 
     return formattedObj
@@ -46,6 +45,30 @@ database.get("/getAllUsers", async (req, res) => {
     .catch((e) => { 
         return errorMessage(e, res) 
     });
+})
+
+database.post("/getOneDb", async (req, res) => {
+    try {
+        const _id = req.body._id
+        const db = req.body.db
+    
+        let recordData = {}
+
+        if (db == "users") {
+            recordData = await usersModel.findOne({ _id: _id}, { 'web_data.hash': false, 'web_data.salt': false })
+        }
+        else if ( db == "lockers") {
+            recordData = await lockersModel.findOne({ _id: _id })
+        }
+
+        return res.status(200).json({
+            status: 200,
+            msg: "User data retrieved",
+            recordData: recordData
+        });
+        
+    }
+    catch (e) { return errorMessage(e, res) }
 })
 
 database.post("/getAllLockers", async (req, res) => {
@@ -124,7 +147,8 @@ database.post("/editDb", async (req, res) => {
     delete req.body._id
 
     const editData = formatDatabaseObject(req.body)
-    console.log("dasdasfasf")
+
+    console.log(req.body, editData)
     try {
         if ( db == "users") {
             await usersModel.findOneAndUpdate({ _id: _id},{ $set: editData })

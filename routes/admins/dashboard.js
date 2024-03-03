@@ -1,5 +1,5 @@
 import express from "express";
-import { pendingApprovalsModel, adminsModel } from '../../models/models.js'
+import { pendingApprovalsModel, adminsModel, lockerLocationsModel } from '../../models/models.js'
 import dotenv from 'dotenv'
 import errorMessage from "../../apiErrorMessage.js";
 
@@ -19,59 +19,70 @@ dashboard.get("/getAllPendingApprovals", async (req, res) => {
     .catch ((e) => {
         return errorMessage(e, res)
     })
-    
+})
+
+dashboard.get("/getAllLockerLocations", async (req, res) => {
+    await lockerLocationsModel.find({})
+    .then( (data) => {
+        return res.status(200).json({
+            status: 200,
+            msg: "Locker locations retrieved",
+            lockerLocations: data
+        })
+    })
+    .catch( (e) => errorMessage(e, res))
 })
 
 dashboard.post("/insertAdmin", async (req, res) => {
-    const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
-    .catch( (e) => {
-        return errorMessage(e, res)
-    })
-
-    if (pendingAdmin) {
-        await adminsModel.create(pendingAdmin.toObject())
-        .then(async (data) => {
-            await pendingApprovalsModel.deleteOne({ _id: req.body._id })
+    try {
+        const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
     
-            return res.status(200).json({
-                status: 200,
-                msg: "Admin approved",
-                user: data
+        if (pendingAdmin) {
+            await adminsModel.create(pendingAdmin.toObject())
+            .then(async (data) => {
+                await pendingApprovalsModel.deleteOne({ _id: req.body._id })
+        
+                return res.status(200).json({
+                    status: 200,
+                    msg: "Admin approved",
+                    user: data
+                })
             })
-        })
-        .catch((e) => {
-            return errorMessage(e, res)
-        })
+        }
+        else {
+            return res.status(404).json({
+                status: 404,
+                msg: "No pending admin with id:" + req.body._id
+            })
+        }
     }
-    else {
-        return res.status(404).json({
-            status: 404,
-            msg: "No pending admin with id:" + req.body._id
-        })
+    catch (e) {
+        return errorMessage(e, res)
     }
 })
 
 dashboard.post("/rejectAdmin", async (req, res) => {
-    const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
-    .catch( (e) => {
-        return errorMessage(e, res)
-    })
-    if(pendingAdmin) {
-        await pendingApprovalsModel.deleteOne({ _id: req.body._id })
-        .then(() => {
-            return res.status(200).json({
-                status: 200,
-                msg: "Admin rejected"
+    try {
+        const pendingAdmin = await pendingApprovalsModel.findOne({ _id: req.body._id }, {_id: false})
+
+        if(pendingAdmin) {
+            await pendingApprovalsModel.deleteOne({ _id: req.body._id })
+            .then(() => {
+                return res.status(200).json({
+                    status: 200,
+                    msg: "Admin rejected"
+                })
             })
-        })
-        .catch( (e) => {
-            return errorMessage(e, res)
-        })
+        }
+        else {
+            return res.status(404).json({
+                status: 404,
+                msg: "No pending admin with id:" + req.body._id
+            })
+        }
     }
-    else {
-        return res.status(404).json({
-            status: 404,
-            msg: "No pending admin with id:" + req.body._id
-        })
+    catch (e) {
+        return errorMessage(e, res)
     }
+    
 })

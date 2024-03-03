@@ -8,7 +8,7 @@ const adminsSchema = new mongoose.Schema({
     hash: String,
     salt: String,
     profile_picture: { type: String, default: null },
-    registered_date: Date
+    registered_date: { type: Date, default: Date.now() }
 })
 
 const pendingApprovalsSchema = new mongoose.Schema({
@@ -31,7 +31,7 @@ const forgetCodesSchema = new mongoose.Schema({
 })
 
 const annoucementsSchema = new mongoose.Schema({
-    type: { type: String, enum: ["users", "lockers"]},
+    type: { type: String, enum: ["Users", "Lockers"]},
     title: String,
     content: String,
     admin: { type: mongoose.Schema.Types.ObjectId, ref: "admins"},
@@ -43,12 +43,13 @@ const usersSchema = new mongoose.Schema({
     dob: Date,
     nric_passport: { type: String, unique: true},
     phone: { type: String, unique: true},
-    locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers", unique: true},
+    locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers", default: null},
     web_data: {
         username: { type: String, default: null},
         email: { type: String, default: null, unique: true},
         hash: { type: String, default: null },
-        salt: { type: String, default: null}
+        salt: { type: String, default: null},
+        last_login: { type: Date, default: null}
     },
     auth_data: {
         rfid: String,
@@ -56,11 +57,10 @@ const usersSchema = new mongoose.Schema({
         fingerprint: String
     },
     recent_activity: [{ 
-        activity: String,
-        timestamp: Date
+        activity: { type: String, default: null},
+        timestamp: { type: Date, default: null}
     }],
     register_date: Date,
-    last_login: Date
 })
 
 const lockersLocationSchema = new mongoose.Schema({
@@ -84,7 +84,8 @@ const lockersSchema = new mongoose.Schema({
 
 const notifyAdminSchema = new mongoose.Schema({
     message: String,
-    user: { type: mongoose.Types.ObjectId, ref: 'users'}
+    user: { type: mongoose.Types.ObjectId, ref: 'users'},
+    timestamp: { type: Date, default: Date.now() }
 })
 
 

@@ -35,6 +35,7 @@ admins.post("/login", async (req, res) => {
     } 
 
     const inputPass = crypto.pbkdf2Sync(req.body.password, user.salt, 1000, 64, "sha512").toString('hex')
+
     if (inputPass == user.hash) {
 
         const signUser = user.toObject()
