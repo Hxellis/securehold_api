@@ -70,6 +70,7 @@ const lockersLocationSchema = new mongoose.Schema({
     active_hours: Number,
     last_active: Date, 
     status: { type: Number, enum: [0,1,2]},
+    total_compartments: Number
     // lockers: [{ type: mongoose.Schema.Types.ObjectId, ref: "lockers"}]
 })
 

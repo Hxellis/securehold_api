@@ -1,5 +1,5 @@
 import express from "express";
-import { pendingApprovalsModel, adminsModel, lockerLocationsModel } from '../../models/models.js'
+import { pendingApprovalsModel, adminsModel, lockerLocationsModel, lockersModel } from '../../models/models.js'
 import dotenv from 'dotenv'
 import errorMessage from "../../apiErrorMessage.js";
 
@@ -22,15 +22,26 @@ dashboard.get("/getAllPendingApprovals", async (req, res) => {
 })
 
 dashboard.get("/getAllLockerLocations", async (req, res) => {
-    await lockerLocationsModel.find({})
-    .then( (data) => {
+    try {
+        const data = await lockerLocationsModel.find({})
+
+        const alteredLockerLocations = await Promise.all(data.map( async (lockerLocation) => {
+            const count = await lockersModel.countDocuments({ location: lockerLocation._id })
+            const lockerLocationObj = lockerLocation.toObject()
+            lockerLocationObj.occupied = count
+            return lockerLocationObj
+        }))
         return res.status(200).json({
             status: 200,
             msg: "Locker locations retrieved",
-            lockerLocations: data
+            lockerLocations: alteredLockerLocations
         })
-    })
-    .catch( (e) => errorMessage(e, res))
+
+    }
+    catch (e) {
+        errorMessage(e, res)
+    }
+    
 })
 
 dashboard.post("/insertAdmin", async (req, res) => {

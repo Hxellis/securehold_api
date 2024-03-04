@@ -109,18 +109,22 @@ database.post("/insertDb", async (req, res) => {
 
     const newData = formatDatabaseObject(req.body)
 
+    let updatedData = {}
     try {
         if (db == "users") { 
             await usersModel.create(newData) 
+            updatedData = await usersModel.find()
         }
         else if ( db == "lockers") {
             newData.location = location
             await lockersModel.create(newData)
+            updatedData = await lockersModel.find({ location: location})
         }
 
         return res.status(200).json({
             status: 200,
             msg: "New record inserted",
+            updatedData: updatedData
         });
     }
     catch (e) {
@@ -147,21 +151,32 @@ database.post("/editDb", async (req, res) => {
     delete req.body._id
 
     const editData = formatDatabaseObject(req.body)
-
-    console.log(req.body, editData)
+    let updatedData = {}
     try {
         if ( db == "users") {
             await usersModel.findOneAndUpdate({ _id: _id},{ $set: editData })
+            updatedData = await usersModel.find()
         }
         else if ( db == "lockers" ) {
             await lockersModel.findOneAndUpdate( { _id: _id }, { $set: editData})
+            updatedData = await lockersModel.find({ location: location})
         }
         return res.status(200).json({
             status: 200,
             msg: "Data editted",
+            updatedData: updatedData
         });
     }
     catch (e) {
+        if (e instanceof mongoose.Error.ValidationError) {
+            const errorFields = Object.keys(e.errors);
+            const errorPath = errorFields[0];
+
+            return res.status(200).json({
+                status: 400,
+                errorField: errorPath
+            })
+        }
         return errorMessage(e, res)
     }
 })
@@ -170,17 +185,23 @@ database.post("/deleteDb", async (req, res) => {
 
     const db = req.body.db
     const _id = req.body._id
+    const location = req.body.location
+
+    let updatedData = {}
 
     try {
         if ( db == "users") {
             await usersModel.deleteOne({_id: _id})
+            updatedData = await usersModel.find()
         }
         else if ( db== "lockers") {
             await lockersModel.deleteOne( {_id: _id})
+            updatedData = await lockersModel.find({ location: location})
         }
         return res.status(200).json({
             status: 200,
             msg: "Data deleted",
+            updatedData: updatedData
         });
     }
     catch (e) {

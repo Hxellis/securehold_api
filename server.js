@@ -99,12 +99,14 @@ app.use("/iot/iot", express.json(), iot)
 await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")
 .then(() => {
 	console.log('Connected to MongoDB'); 
+	
+	//establish port
+	app.listen(port, () => {
+		console.log(`Server is running on port ${port}`);
+	});
 })
 .catch((error) => {
 	console.error('Error connecting to MongoDB:', error);
 });
 
-//establish port
-app.listen(port, () => {
-	console.log(`Server is running on port ${port}`);
-});
+
