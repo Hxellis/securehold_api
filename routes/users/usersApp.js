@@ -9,7 +9,7 @@ dotenv.config()
 export const usersApp  = express.Router()
 
 usersApp.get("/getAnnouncements", async (req, res) => {
-    await annoucementsModel.find({}).populate("admin")
+    await annoucementsModel.find({ type: "Users"}).populate("admin")
     .then( (resp) => {
         return res.status(200).json({
             status: 200,

@@ -57,8 +57,8 @@ const usersSchema = new mongoose.Schema({
         fingerprint: String
     },
     recent_activity: [{ 
-        activity: { type: String, default: null},
-        timestamp: { type: Date, default: null}
+        activity: String,
+        timestamp: String
     }],
     register_date: Date,
 })

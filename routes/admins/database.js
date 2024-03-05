@@ -7,7 +7,7 @@ export const database  = express.Router()
 
 function formatDatabaseObject(obj) {
     const formattedObj = obj
-    const excludedFields = ["occupied_by"]
+    const excludedFields = ["occupied_by", "locker_id"]
 
     for (const [key, value] of Object.entries(formattedObj)) {
         
@@ -34,7 +34,7 @@ function formatDatabaseObject(obj) {
 }
 
 database.get("/getAllUsers", async (req, res) => {
-    await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false })
+    await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
     .then((data) => {
         res.status(200).json({
             status: 200,
@@ -113,12 +113,18 @@ database.post("/insertDb", async (req, res) => {
     try {
         if (db == "users") { 
             await usersModel.create(newData) 
-            updatedData = await usersModel.find()
+            if (newData.locker_id) {
+                await lockersModel.findOneAndUpdate({ _id: newData.locker_id}, { $set: { occupied_by: _id }}) 
+            }
+            else {
+                await lockersModel.findOneAndUpdate({ occupied_by: _id}, { $set: { occupied_by: null }}) 
+            }
+            updatedData = await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
         }
         else if ( db == "lockers") {
             newData.location = location
             await lockersModel.create(newData)
-            updatedData = await lockersModel.find({ location: location})
+            updatedData = await lockersModel.find({ location: location}).populate("occupied_by")
         }
 
         return res.status(200).json({
@@ -134,8 +140,18 @@ database.post("/insertDb", async (req, res) => {
 
             return res.status(200).json({
                 status: 400,
+                msg: 'Invalid type',
                 errorField: errorPath
             })
+        }
+        else if (e.name === 'MongoServerError' && e.code === 11000) {
+            const duplicatedKey = Object.keys(e.keyValue)[0];
+    
+            return res.status(200).json({
+                status: 400,
+                msg: 'Duplicate key error',
+                duplicatedKey: duplicatedKey,
+            });
         }
         else {
             return errorMessage(e, res)
@@ -150,16 +166,31 @@ database.post("/editDb", async (req, res) => {
     const _id = req.body._id
     delete req.body._id
 
+    const location = req.body.location
+    delete req.body.location
+
     const editData = formatDatabaseObject(req.body)
     let updatedData = {}
     try {
         if ( db == "users") {
             await usersModel.findOneAndUpdate({ _id: _id},{ $set: editData })
-            updatedData = await usersModel.find()
+            if (editData.locker_id) {
+                await lockersModel.findOneAndUpdate({ _id: editData.locker_id}, { $set: { occupied_by: _id }}) 
+            }
+            else {
+                await lockersModel.findOneAndUpdate({ occupied_by: _id}, { $set: { occupied_by: null }}) 
+            }
+            updatedData = await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
         }
         else if ( db == "lockers" ) {
             await lockersModel.findOneAndUpdate( { _id: _id }, { $set: editData})
-            updatedData = await lockersModel.find({ location: location})
+            if (editData.occupied_by) {
+                await usersModel.findOneAndUpdate({ _id: editData.occupied_by}, { $set: { locker_id: _id }}) 
+            }
+            else {
+                await usersModel.findOneAndUpdate({ locker_id: _id}, { $set: { locker_id: null }}) 
+            }
+            updatedData = await lockersModel.find({ location: location}).populate("occupied_by")
         }
         return res.status(200).json({
             status: 200,

@@ -14,6 +14,7 @@ import { database } from "./routes/admins/database.js";
 import { users } from  "./routes/users/users.js"
 import { usersApp } from "./routes/users/usersApp.js";
 import { iot } from "./routes/iot/iot.js";
+import { dataAnalytics } from "./routes/admins/dataAnalytics.js";
 
 dotenv.config()
 const app = express();
@@ -91,6 +92,7 @@ app.use("/admins/dashboard", multer().array(), dashboard)
 app.use("/admins/annoucements", multer().array(), annoucements)
 app.use("/admins/profile", profile) // custom multer middleware cause image uploading
 app.use("/admins/database", multer().array(), database)
+app.use("/admins/dataAnalytics", multer().array(), dataAnalytics)
 app.use("/users/users", multer().array(), users)
 app.use("/users/usersApp", multer().array(), usersApp)
 app.use("/iot/iot", express.json(), iot)

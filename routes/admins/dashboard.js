@@ -26,8 +26,10 @@ dashboard.get("/getAllLockerLocations", async (req, res) => {
         const data = await lockerLocationsModel.find({})
 
         const alteredLockerLocations = await Promise.all(data.map( async (lockerLocation) => {
-            const count = await lockersModel.countDocuments({ location: lockerLocation._id })
+            const totalCount = await lockersModel.countDocuments({ location: lockerLocation._id })
+            const count = await lockersModel.countDocuments({ location: lockerLocation._id, occupied_by: { $ne: null} })
             const lockerLocationObj = lockerLocation.toObject()
+            lockerLocationObj.totalComp = totalCount
             lockerLocationObj.occupied = count
             return lockerLocationObj
         }))

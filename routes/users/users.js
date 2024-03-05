@@ -115,7 +115,7 @@ users.post("/signup", async (req, res) => {
         const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, `sha512`).toString('hex')
     
         const newUser = {
-            user_id: username,
+            username: username,
             email: email,
             hash: hash,
             salt: salt
