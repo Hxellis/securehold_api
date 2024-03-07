@@ -58,7 +58,7 @@ const usersSchema = new mongoose.Schema({
     },
     recent_activity: [{ 
         activity: String,
-        timestamp: String
+        timestamp: Date
     }],
     register_date: Date,
 })

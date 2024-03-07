@@ -44,10 +44,10 @@ users.post("/login", async (req, res) => {
 
         const inputPass = crypto.pbkdf2Sync(password, user.web_data.salt, 1000, 64, "sha512").toString('hex')
         if (inputPass == user.web_data.hash) {
-            const loginUser = await usersModel.findOneAndUpdate({ 'web_data.username': username }, { last_login: Date.now()}, {projection: { 'web_data.hash': false, 'web_data.salt': false}}).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
+            const loginUser = await usersModel.findOneAndUpdate({ 'web_data.username': username }, { last_login: Date.now()}, { projection: {_id: true}})
 
             const signUser = loginUser.toObject()
-
+            console.log(signUser)
             const token = jwt.sign(signUser, process.env.JWT_KEY, { expiresIn: '12h' })
             return res
             .header('Access-Control-Allow-Credentials', true)
@@ -72,6 +72,8 @@ users.post("/login", async (req, res) => {
     }
     catch(e) { return errorMessage(e, res) }
 })
+
+
 
 users.post("/signup", async (req, res) => {
     try {
