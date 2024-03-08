@@ -41,7 +41,10 @@ usersApp.post("/notifyAdmin", async (req, res) => {
         const message = req.body.message
         
         await notifyAdminModel.create({ message:message, user: _id })
-
+        return res.status(200).json({
+            status: 200,
+            msg: "Notification retrieved",
+        })
     }
     catch (e) {
         return errorMessage (e, res)
@@ -50,9 +53,9 @@ usersApp.post("/notifyAdmin", async (req, res) => {
 
 usersApp.get("/openLocker", async (req, res) => {
     try {
-        const lockerId = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id;
+        const userId = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id;
 
-        await lockersModel.findOneAndUpdate({ occupied_by: lockerId}, { $set: { door_status: true}})
+        await lockersModel.findOneAndUpdate({ occupied_by: userId}, { $set: { door_status: true}})
 
         return res.status(200).json({
             status: 200,
@@ -62,4 +65,26 @@ usersApp.get("/openLocker", async (req, res) => {
     catch (e) {
         return errorMessage(e, res)
     }
+})
+
+usersApp.get("/logout", async (req, res) => {
+    try {
+        const userId = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id;
+        
+        await usersModel.findOneAndUpdate({ _id : userId }, { $set: {'web_data.last_login': Date.now()}})
+
+        return res.clearCookie("access_token", {
+            httpOnly: true,
+            domain: 'localhost',
+            secure: true,
+            sameSite: 'none',
+        }).status(200).json({
+            status: 200,
+            msg: "Token Cleared",
+        })
+    }
+    catch (e) {
+        errorMessage(e, res)
+    }
+    
 })
