@@ -1,5 +1,5 @@
 import express from 'express'
-import { annoucementsModel, notifyAdminModel, usersModel } from '../../models/models.js'
+import { annoucementsModel, lockersModel, notifyAdminModel, usersModel } from '../../models/models.js'
 import errorMessage from '../../apiErrorMessage.js'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
@@ -13,7 +13,6 @@ usersApp.get("/getUserData", async (req, res) => {
         const userId = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id;
         
         const data = await usersModel.findOne({ _id: userId }, { projection: { 'web_data.hash': false, 'web_data.salt': false } }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}});
-        console.log(data)
         return res.status(200).json({
             status: 200,
             msg: "User data retrieved",
@@ -46,5 +45,21 @@ usersApp.post("/notifyAdmin", async (req, res) => {
     }
     catch (e) {
         return errorMessage (e, res)
+    }
+})
+
+usersApp.get("/openLocker", async (req, res) => {
+    try {
+        const lockerId = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id;
+
+        await lockersModel.findOneAndUpdate({ occupied_by: lockerId}, { $set: { door_status: true}})
+
+        return res.status(200).json({
+            status: 200,
+            msg: "Locker opened"
+        })
+    }
+    catch (e) {
+        return errorMessage(e, res)
     }
 })

@@ -239,3 +239,19 @@ database.post("/deleteDb", async (req, res) => {
         return errorMessage(e, res)
     }
 })
+
+database.post("/openLocker", async (req, res) => {
+    try {
+        const lockerId = req.body.lockerId
+        
+        await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: { door_status: true}})
+
+        return res.status(200).json({
+            status: 200,
+            msg: "Locker opened"
+        })
+    }
+    catch (e) {
+        return errorMessage(e, res)
+    }
+})

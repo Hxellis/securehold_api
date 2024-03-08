@@ -3,6 +3,7 @@ import { usersModel, annoucementsModel, lockersModel, lockerLocationsModel } fro
 import errorMessage from '../../apiErrorMessage.js'
 import dotenv from 'dotenv'
 
+
 dotenv.config()
 
 export const iot  = express.Router()
@@ -16,7 +17,7 @@ iot.get("/testApi", async (req, res) => {
 })
 
 iot.get("/getAnnouncements", async (req, res) => {
-    await annoucementsModel.find({ type: "Lockers"})
+    await annoucementsModel.findOne({ type: "Lockers"}).sort({ _id: -1})
     .then ( (resp) => {
         return res.status(200).json({
             status: 200,
@@ -105,13 +106,13 @@ iot.post("/updateLockerStatus", async (req, res) => {
 
         if (doorOpen) {
             await lockersModel.findOneAndUpdate({ _id: lockerId }, { $set: { door_status: true, last_used: Date.now() }, $inc: { open_count: 1}})
-            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { activity: "Locker opened", timestamp: Date.now()}})
+            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: {activity: "Locker opened", timestamp: Date.now()}}})
         }
         else {
             const locker = await lockersModel.findOne({ _id: lockerId})
             const useTime = (Date.now() - locker.last_used) / (1000 * 60)
             await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false}, $inc: { usage_minutes: useTime}} )
-            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { activity: "Locker closed", timestamp: Date.now()}})
+            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: {activity: "Locker closed", timestamp: Date.now()}}})
         }
 
         return res.status(200).json({
@@ -149,4 +150,20 @@ iot.post("/updateLocationStatus", async (req, res) => {
     catch (e) {
         return errorMessage(e, res)
     }
+})
+
+iot.post("/isLockerOpen", async (req,res) => {
+    const userId = req.body.id
+    const lockerStatus = (await lockersModel.findOne({ _id: userId }, { door_status: true})).door_status
+
+    res.status(200).json({
+        status:200,
+        msg: "Checked Locker",
+        lockerStatus: lockerStatus
+    })
+})
+
+iot.get("/testSignal", (req, res) => {
+    console.log("a")
+    res.status(200).json({ message: 'Signal sent to the IoT device' });
 })
