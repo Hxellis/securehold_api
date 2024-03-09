@@ -75,6 +75,7 @@ const lockersLocationSchema = new mongoose.Schema({
 })
 
 const lockersSchema = new mongoose.Schema({
+    locker_id: String,
     location: { type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
     occupied_by: { type: mongoose.Schema.Types.ObjectId, ref: "users", default: null},
     door_status: { type: Boolean, default: false},

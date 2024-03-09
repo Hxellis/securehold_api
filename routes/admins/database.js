@@ -122,6 +122,8 @@ database.post("/insertDb", async (req, res) => {
             updatedData = await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
         }
         else if ( db == "lockers") {
+            const documentCount = await lockersModel.countDocuments()
+            newData.locker_id = "KL_" + ('000' + (documentCount + 1)).slice(-3)
             newData.location = location
             await lockersModel.create(newData)
             updatedData = await lockersModel.find({ location: location}).populate("occupied_by")
