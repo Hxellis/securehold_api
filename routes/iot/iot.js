@@ -46,26 +46,26 @@ iot.post("/getUserData", async (req, res) => {
 iot.post("/assignLocker", async (req, res) => {
     try {
         const userId = req.body.userId
-        const locationId = req.body.locationId
+        const lockerId = req.body.lockerId
 
-        const locker = await lockersModel.findOne({ location: locationId, occupied_by: null})
+        // const locker = await lockersModel.findOne({ location: locationId, occupied_by: null})
 
-        if (locker) {
-            await lockersModel.findOneAndUpdate({ _id: locker._id }, { $set: { occupied_by: userId}})
-            await usersModel.findOneAndUpdate( { _id: userId}, { $set: { locker_id: locker._id } })
+        // if (locker) {
+            await lockersModel.findOneAndUpdate({ _id: lockerId }, { $set: { occupied_by: userId}})
+            await usersModel.findOneAndUpdate( { _id: userId}, { $set: { locker_id: lockerId } })
 
             return res.status(200).json({
                 status: 200,
                 msg: "Locker assigned",
-                lockerId: locker._id
+                lockerId: lockerId
             })
-        }
-        else {
-            return res.status(200).json({
-                status: 403,
-                msg: "No more lockers available at this location"
-            })
-        }
+        // }
+        // else {
+        //     return res.status(200).json({
+        //         status: 403,
+        //         msg: "No more lockers available at this location"
+        //     })
+        // }
     }
     catch (e) {
         return errorMessage(e, res)
@@ -130,17 +130,20 @@ iot.post("/updateLocationStatus", async (req, res) => {
         const locationId = req.body.locationId
         const status = req.body.status
 
-        if (status == 1 ) {
+        const prevLocationData = await lockerLocationsModel.findOne({ _id: locationId })
+
+        
+        if (prevLocationData.status == 0) {
             await lockerLocationsModel.findOneAndUpdate({ _id: locationId }, { $set: { status: status, last_active: Date.now() }})        
         }
-        else if (status == 0) {
-            const locker = await lockerLocationsModel.findOne({ _id: locationId })
-            const useTime = (Date.now() - locker.last_used) / (1000 * 60 * 60)
-            await lockerLocationsModel.findByIdAndUpdate({ _id: locationId }, { $set: { status: status}, $inc: { active_hours: useTime }})
+        else {
+            const useTime = (Date.now() - prevLocationData.last_used) / (1000 * 60 * 60)
+            await lockerLocationsModel.findOneAndUpdate({ _id: locationId }, { $set: { status: status, last_active: Date.now(), $inc: { active_hours: useTime } }})        
         }
-        else if ( status == 2) {
-            await lockerLocationsModel.findOneAndUpdate({ _id: locationId }, { $set: { status: status }})        
-        }
+
+        // else if ( status == 2) {
+        //     await lockerLocationsModel.findOneAndUpdate({ _id: locationId }, { $set: { status: status }})        
+        // }
 
         return res.status(200).json({
             status: 200,
