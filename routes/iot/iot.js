@@ -17,26 +17,45 @@ iot.get("/testApi", async (req, res) => {
 })
 
 iot.get("/getAnnouncements", async (req, res) => {
-    await annoucementsModel.findOne({ type: "Lockers"}).sort({ _id: -1})
-    .then ( (resp) => {
+    try {
+        const resp = await annoucementsModel.find({ type: "Lockers"}, {content: 1, _id: 0}).sort({ _id: -1}).limit(1);
+        const contents = resp.map(announcement => announcement.content).join(", ");
         return res.status(200).json({
             status: 200,
-            msg: "Locker annoucements received",
-            annoucements: resp
-        })
-    })
-    .catch ( (e) => errorMessage(e, res))
+            msg: "Locker announcements received",
+            announcements: contents
+        });
+    } catch (e) {
+        errorMessage(e, res);
+    }
 })
 
 iot.post("/getUserData", async (req, res) => {
     try {
         const rfid  = req.body.rfid
+        console.log(rfid)
         const userData  = await usersModel.findOne( { 'auth_data.rfid': rfid }, {projection: { 'web_data.hash': false, 'web_data.salt': false}})
-        return res.status(200).json({
-            status: 200,
-            msg: "Retrieved user data",
-            userData: userData
-        })
+        console.log(userData)
+        if (userData) {
+            const userName = userData.name
+            const userFinger = userData.auth_data.fingerprint;
+            return res.status(200).json({
+                status: 200,
+                msg: "Retrieved user data",
+                userData: userData,
+                userName: userName,
+                userFinger: userFinger
+            })
+        }
+        else {
+            return res.status(200).json({
+                status: 400,
+                msg: "No user data",
+                userData: null,
+                userName: null,
+                userFinger: null
+            })
+        }
     }
     catch (e) {
         return errorMessage(e, res)
@@ -156,14 +175,35 @@ iot.post("/updateLocationStatus", async (req, res) => {
 })
 
 iot.post("/isLockerOpen", async (req,res) => {
-    const userId = req.body.id
-    const lockerStatus = (await lockersModel.findOne({ _id: userId }, { door_status: true})).door_status
+    try {
+        const lockerId = req.body.lockerId
+        const lockerStatus = await lockersModel.findOne({ _id: lockerId })
+    
+        return res.status(200).json({
+            status:200,
+            msg: "Checked Locker",
+            lockerStatus: lockerStatus.door_status
+        })
+    }
+    catch (e) {
+        return errorMessage(e, res)
+    }
+})
 
-    res.status(200).json({
-        status:200,
-        msg: "Checked Locker",
-        lockerStatus: lockerStatus
-    })
+iot.post("/closeLocker", async (req, res) => {
+    try {
+        const lockerId = req.body.lockerId
+
+        await lockersModel.findOneAndUpdate({ _id: lockerId}, { door_status: false })
+
+        return res.status(200).json({
+            status:200,
+            msg: "Closed Locker",
+        })
+    }
+    catch (e) {
+        return errorMessage(e, res)
+    }
 })
 
 iot.get("/testSignal", (req, res) => {
