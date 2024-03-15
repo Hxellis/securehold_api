@@ -70,7 +70,6 @@ const lockersLocationSchema = new mongoose.Schema({
     active_hours: { type: Number, default: 0},
     last_active: { type: Date, default: null }, 
     status: { type: Number, enum: [0,1,2], default: 0},
-    total_compartments: { type: Number, default: 0 }
 })
 
 const lockersSchema = new mongoose.Schema({

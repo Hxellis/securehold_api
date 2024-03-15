@@ -39,7 +39,7 @@ function runPython(filename, data) {
         pythonProcess.stderr.on("data", (err) => { errorData += err });
     
         pythonProcess.on("close", (code) => {
-            console.log(`child process exited with code ${code}`);
+            // console.log(`child process exited with code ${code}`);
             if (errorData) {
                 reject(errorData);
             } else {
@@ -152,7 +152,6 @@ dataAnalytics.post("/getDemandForecast", async (req, res) => {
 
         runPython("userDemand", pastData)
         .then((result) => {
-            console.log(result, "aaaaa")
             const yForecast = JSON.parse(result);
             return res.status(200).json({
                 status: 200,
