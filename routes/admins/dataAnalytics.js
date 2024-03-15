@@ -45,7 +45,7 @@ dataAnalytics.get("/getLockerLocationIds", async (req, res) => {
 
 dataAnalytics.post("/getOccupancyCount", async (req, res) => {
     try {
-        const lockerId = req.body?.lockerId || null
+        const locationId = req.body?.locationId || null
         const lockerHistory = await lockerHistoryModel.find()
 
         // xAxis
@@ -57,8 +57,8 @@ dataAnalytics.post("/getOccupancyCount", async (req, res) => {
             let occupiedNum = 0
             let totalNum = 0
             dailyOccupancy.occupancy_count.forEach((locationOccupancy) => {
-                if (lockerId) {
-                    if (locationOccupancy.locker_id == lockerId) {
+                if (locationId) {
+                    if (locationOccupancy.location_id == locationId) {
                         occupiedNum += locationOccupancy.occupied
                         totalNum = locationOccupancy.total
                     }
@@ -96,7 +96,7 @@ dataAnalytics.post("/getOccupancyCount", async (req, res) => {
 
 dataAnalytics.post("/getDemandForecast", async (req, res) => {
     try {
-        const lockerId = req.body?.lockerId || null
+        const locationId = req.body?.locationId || null
         const lockerHistory = await lockerHistoryModel.findOne().sort({$natural:-1})
 
         const xAxis = []
@@ -105,8 +105,8 @@ dataAnalytics.post("/getDemandForecast", async (req, res) => {
         }
 
         let yAxis = []
-        if(lockerId) {
-            yAxis = (lockerHistory.demand_forecast.open_counts.find((record) => record.locker_id.toString() == lockerId)).count
+        if(locationId) {
+            yAxis = (lockerHistory.demand_forecast.open_counts.find((record) => record.location_id.toString() == locationId)).count
         }
         else {
             lockerHistory.demand_forecast.open_counts.forEach((records) => {

@@ -113,14 +113,14 @@ const notifyAdminSchema = new mongoose.Schema({
 //db.runCommand( { collMod: "locker_history", cappedMax: 69 } )   to change max documents
 const lockerHistorySchema = new mongoose.Schema({
     occupancy_count:  [{
-        locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
+        location_id: {type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
         occupied: Number,
         total: Number
     }],
     demand_forecast: {
         hour_interval: Number,
         open_counts: [{
-            locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
+            location_id: {type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
             count: [Number],
         }]
     },
