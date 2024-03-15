@@ -90,6 +90,42 @@ const notifyAdminSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now() }
 })
 
+// const lockerHistorySchema = new mongoose.Schema({
+//     occupancy_count: {
+//         type: [ {
+//             occupancy: [{
+//                 locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
+//                 occupied: Number,
+//                 total: Number
+//             }],
+//             date: Date
+//         }],
+//         validate: [(value) => { return value.length <= 5}, '{PATH} exceeds the limit of 5']
+//     },
+//     demand_forecast: {
+//         open_counts: [Number],
+//         hour_interval: Number,
+//         date: Date
+//     },
+// })
+
+// capped schema - max 5
+//db.runCommand( { collMod: "locker_history", cappedMax: 69 } )   to change max documents
+const lockerHistorySchema = new mongoose.Schema({
+    occupancy_count:  [{
+        locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
+        occupied: Number,
+        total: Number
+    }],
+    demand_forecast: {
+        hour_interval: Number,
+        open_counts: [{
+            locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
+            count: [Number],
+        }]
+    },
+    date: Date
+})
 
 export const usersModel = mongoose.model("users", usersSchema)
 export const lockerLocationsModel = mongoose.model("locker_locations", lockersLocationSchema)
@@ -99,4 +135,5 @@ export const pendingApprovalsModel = mongoose.model("pending_approvals", pending
 export const signupCodesModel = mongoose.model("signup_codes", signupCodesSchema)
 export const forgetCodesModel = mongoose.model("forget_codes", forgetCodesSchema)
 export const annoucementsModel = mongoose.model('annoucements', annoucementsSchema)
-export const notifyAdminModel = mongoose.model('notify_admin', notifyAdminSchema)
+export const notifyAdminModel = mongoose.model('notify_admins', notifyAdminSchema)
+export const lockerHistoryModel = mongoose.model('locker_history', lockerHistorySchema, 'locker_history')

@@ -6,6 +6,8 @@ import dotenv from 'dotenv'
 import cookieParser from "cookie-parser";
 import jwt from 'jsonwebtoken'
 
+import lockerUpdateSchedule from "./updateLockerHistory.js";
+
 import { admins } from "./routes/admins/admins.js";
 import { dashboard } from './routes/admins/dashboard.js'
 import { annoucements } from "./routes/admins/annoucements.js";
@@ -106,6 +108,8 @@ await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + proces
 	app.listen(port, () => {
 		console.log(`Server is running on port ${port}`);
 	});
+
+	lockerUpdateSchedule()
 })
 .catch((error) => {
 	console.error('Error connecting to MongoDB:', error);
