@@ -1,5 +1,5 @@
 import express from 'express'
-import { usersModel, annoucementsModel, lockersModel, lockerLocationsModel } from '../../models/models.js'
+import { usersModel, annoucementsModel, lockersModel, lockerLocationsModel, lockerHistoryModel } from '../../models/models.js'
 import errorMessage from '../../apiErrorMessage.js'
 import dotenv from 'dotenv'
 
@@ -130,8 +130,42 @@ iot.post("/updateLockerStatus", async (req, res) => {
         else {
             const locker = await lockersModel.findOne({ _id: lockerId})
             const useTime = (Date.now() - locker.last_used) / (1000 * 60)
-            await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false}, $inc: { usage_minutes: useTime}} )
+            const locationId = (await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false}, $inc: { usage_minutes: useTime}},  { new: true })).location
             await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: {activity: "Locker closed", timestamp: Date.now()}}})
+            
+
+            const date = new Date()
+            date.setHours(0,0,0,0)
+
+            const demandForecastRecord = await lockerHistoryModel.findOne( { date: date } )
+            const locationDemandForecast = demandForecastRecord.demand_forecast.open_counts.find((openCount) => openCount.location_id.toString() == locationId)
+            const hourInterval = demandForecastRecord.demand_forecast.hour_interval
+
+            if (!locationDemandForecast) {
+                const yesterdayDate = new Date();
+                yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+                yesterdayDate.setHours(0,0,0,0)
+                const yesterdayData = (await lockerHistoryModel.findOne({ date: yesterdayDate })).demand_forecast.open_counts
+                const finalCount = (yesterdayData.find((openCount) => openCount.location_id.toString() == locationId)).count[finalObj.count.length - 1]
+
+                const timeDivided = Math.floor(24/hourInterval) - 1
+                const newCountArr = [finalCount]
+                for (let x = 0; x < timeDivided; x++) {
+                    newCountArr.push(0)
+                }
+
+                await lockerHistoryModel.findOneAndUpdate(
+                    { date: date, 'demand_forecast.open_counts.location_id': lockerId},
+                    { $push: { 'demand_forecast.open_counts': { location_id: locationId, count: newCountArr }}}
+                )
+            }
+            
+            const incrementObj = {};
+            incrementObj[`demand_forecast.open_counts.$.count.${Math.floor(new Date().getHours() / hourInterval) + 1}`] = 1
+            await lockerHistoryModel.findOneAndUpdate(
+                { date: date, 'demand_forecast.open_counts.location_id': lockerId},
+                { $inc: incrementObj}
+            )
         }
 
         return res.status(200).json({

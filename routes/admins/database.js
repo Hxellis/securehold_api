@@ -257,3 +257,29 @@ database.post("/openLocker", async (req, res) => {
         return errorMessage(e, res)
     }
 })
+
+database.post("/insertLockerLocation", async (req, res) => {
+    try {
+        const name = req.body.name
+        const city = req.body.city
+        const address = req.body.address
+        
+        const locationName = await lockerLocationsModel.findOne({ name: name})
+
+        if (locationName) {
+            return res.status(200).json({
+                status: 401,
+                msg: "Location already exist"
+            })
+        }
+        await lockerLocationsModel.create({ name: name, city: city, address: address })
+
+        return res.status(200).json({
+            status: 200,
+            msg: "Locker location inserted"
+        })
+    }
+    catch (e) {
+        return errorMessage(e, res)
+    }
+})

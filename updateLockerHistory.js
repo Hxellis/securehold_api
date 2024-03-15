@@ -1,5 +1,7 @@
 import { lockerHistoryModel, lockerLocationsModel, lockersModel } from "./models/models.js"
 
+const hour_interval = 4
+
 function updateLockerHistory() {
     if (new Date().getSeconds() == 10) {
         console.log("ayy it time")
@@ -7,48 +9,52 @@ function updateLockerHistory() {
     else console.log("it aint time", new Date())
 }
 
-async function updateOccupancyCount() {
-
-    const yesterdayDate = new Date();
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-    yesterdayDate.setHours(0,0,0,0)
+export default async function updateOccupancyCount() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(0, 0, 0, 0);
     
-    console.log(yesterdayDate)
-    if (new Date().getHours() === 17) {
-        // const ligma = await lockerHistoryModel.find({
-        //     date: yesterdayDate
-        // })
-        const lockers = await lockersModel.find({})
-        const lockersLocation = await lockerLocationsModel.find({})
+    let milliseconds = midnight - now;
 
-        const occupancyCountArr = []
-
-        lockersLocation.forEach((location) => {
-            const locationId = location._id.toString()
-            let occupied = 0
-            let total = 0
-            lockers.forEach((locker) => {
-                if (locker.location.toString() == locationId) {
-                    total += 1
-                    if (locker.occupied_by) {
-                        occupied += 1
+    if (milliseconds < 0) {
+        milliseconds += 24 * 60 * 60 * 1000; // Add milliseconds for one day
+    }
+    
+    console.log("Occupancy update:", milliseconds)
+    setTimeout(async () => {
+        try {
+            const lockers = await lockersModel.find({})
+            const lockersLocation = await lockerLocationsModel.find({})
+    
+            const occupancyCountArr = []
+    
+            lockersLocation.forEach((location) => {
+                const locationId = location._id.toString()
+                let occupied = 0
+                let total = 0
+                lockers.forEach((locker) => {
+                    if (locker.location.toString() == locationId) {
+                        total += 1
+                        if (locker.occupied_by) {
+                            occupied += 1
+                        }
                     }
-                }
+                })
+                occupancyCountArr.push({
+                    location_id: locationId,
+                    occupied: occupied,
+                    total: total
+                })
             })
-            occupancyCountArr.push({
-                locker_id: locationId
-            })
-        })
-        
-    }
-    else {
-        console.log("notTime")
-    }
+    
+            const yesterdayDate = new Date();
+            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+            await lockerHistoryModel.findOneAndUpdate({date: yesterdayDate}, { $set: { occupancy_count: occupancyCountArr}})
+            await lockerHistoryModel.create({ date: midnight, demand_forecast: { hour_interval: hour_interval}})
+        }
+        catch (e) {
+            console.log(e)
+        }
+        setTimeout(updateOccupancyCount, 1000);
+    }, milliseconds);
 }
-
-export default function lockerUpdateSchedule() {
-    // setInterval(updateLockerHistory, 1000)
-    // setInterval(testFind, 5000)
-    updateOccupancyCount()
-    // setInterval(updateOccupancyCount, 60*60*1000)
-};

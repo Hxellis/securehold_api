@@ -67,11 +67,10 @@ const lockersLocationSchema = new mongoose.Schema({
     name: String,
     city: String,
     address: String,
-    active_hours: Number,
-    last_active: Date, 
-    status: { type: Number, enum: [0,1,2]},
-    total_compartments: Number
-    // lockers: [{ type: mongoose.Schema.Types.ObjectId, ref: "lockers"}]
+    active_hours: { type: Number, default: 0},
+    last_active: { type: Date, default: null }, 
+    status: { type: Number, enum: [0,1,2], default: 0},
+    total_compartments: { type: Number, default: 0 }
 })
 
 const lockersSchema = new mongoose.Schema({
@@ -90,39 +89,26 @@ const notifyAdminSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now() }
 })
 
-// const lockerHistorySchema = new mongoose.Schema({
-//     occupancy_count: {
-//         type: [ {
-//             occupancy: [{
-//                 locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers"},
-//                 occupied: Number,
-//                 total: Number
-//             }],
-//             date: Date
-//         }],
-//         validate: [(value) => { return value.length <= 5}, '{PATH} exceeds the limit of 5']
-//     },
-//     demand_forecast: {
-//         open_counts: [Number],
-//         hour_interval: Number,
-//         date: Date
-//     },
-// })
-
 // capped schema - max 5
 //db.runCommand( { collMod: "locker_history", cappedMax: 69 } )   to change max documents
 const lockerHistorySchema = new mongoose.Schema({
-    occupancy_count:  [{
-        location_id: {type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
-        occupied: Number,
-        total: Number
-    }],
+    occupancy_count:  { 
+        type: [{
+            location_id: {type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
+            occupied: Number,
+            total: Number
+        }],
+        default: []
+    },
     demand_forecast: {
         hour_interval: Number,
-        open_counts: [{
-            location_id: {type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
-            count: [Number],
-        }]
+        open_counts: {
+            type: [{
+                location_id: {type: mongoose.Schema.Types.ObjectId, ref: "locker_locations"},
+                count: [Number],
+            }],
+            default: []
+        }
     },
     date: Date
 })

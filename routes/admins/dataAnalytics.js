@@ -14,22 +14,40 @@ export const dataAnalytics  = express.Router()
 const pythonFilePath = dirname(fileURLToPath(import.meta.url)) + "\\analytics\\" 
 dataAnalytics.get("/test", (req, res) => {
 
-    const pythonProcess = spawn("python", [pythonFilePath + "test.py", "test2"]);
-
-    let outputData = "";
-    let errorData = ""; 
-
-    //parse output
-    pythonProcess.stdout.on("data", (data) => { outputData += JSON.parse(data) });
-
-    //parse error message
-    pythonProcess.stderr.on("data", (err) => { errorData += JSON.parse(err) });
-
-    pythonProcess.on("close", (code) => {
-        console.log(`child process exited with code ${code}`);
-        return errorData ? errorMessage(errorData, res) : res.send(outputData);
-    });
+    const data = [
+        [ 5, 11, 15, 12, 18, 19 ],
+        [ 7, 13, 17, 14, 20, 21 ],
+        [ 9, 15, 19, 16, 22, 23 ],
+        [ 12, 17, 21, 18, 24, 23 ]
+      ]
+    
+        runPython("test2", data)
+        .then((result) => {
+            return res.send(result)
+        })
+        .catch((e) => errorMessage(e, res))
 });
+
+function runPython(filename, data) {
+    return new Promise((resolve, reject) => {
+        const pythonProcess = spawn("python", [pythonFilePath + "analyticsHandler.py", filename, JSON.stringify(data)]);
+
+        let outputData = "";
+        let errorData = ""; 
+    
+        pythonProcess.stdout.on("data", (data) => { outputData += data;});
+        pythonProcess.stderr.on("data", (err) => { errorData += err });
+    
+        pythonProcess.on("close", (code) => {
+            console.log(`child process exited with code ${code}`);
+            if (errorData) {
+                reject(errorData);
+            } else {
+                resolve(outputData);
+            }
+        });
+    })
+}
 
 dataAnalytics.get("/getLockerLocationIds", async (req, res) => {
     await lockerLocationsModel.find({}, { projection: {_id: true}})
@@ -73,21 +91,23 @@ dataAnalytics.post("/getOccupancyCount", async (req, res) => {
                 totalNum: totalNum
             }
         })
-        // console.log(occupiedObj)
         const yAxis = occupiedObj.map((arr) => arr.occupiedNum)
-        yAxis.push(45) //current hard coded predictions
-
-        
         const yAxisPeak = Math.max(occupiedObj.totalNum)
 
-        return res.status(200).json({
-            status: 200,
-            msg: "Locker history retrieved",
-            xAxis: xAxis,
-            yAxis: yAxis,
-            yAxisPeak: yAxisPeak
+        runPython("occupancy", yAxis)
+        .then((result) => {
+            yAxis.push(JSON.parse(result)[0]) 
+            return res.status(200).json({
+                status: 200,
+                msg: "Locker history retrieved",
+                xAxis: xAxis,
+                yAxis: yAxis,
+                yAxisPeak: yAxisPeak
+            })
         })
-        
+        .catch((e) => {
+            errorMessage(e, res)
+        })
     }
     catch (e) {
         return errorMessage(e, res)
@@ -116,15 +136,36 @@ dataAnalytics.post("/getDemandForecast", async (req, res) => {
             })
         }
 
-        const yForecast = [2, 3, 8, 2, 6, 9, 13]; // hard coded prediction
+        const pastLockerHistory = await lockerHistoryModel.find({}).limit(4)
+        const pastData = pastLockerHistory.map((documents) => {
+            if (locationId) {
+                return (documents.demand_forecast.open_counts.find((openCounts) => openCounts.location_id.toString() == locationId)).count
+            }
+            let sumPastArr = []
+            documents.demand_forecast.open_counts.forEach((openCounts) => {
+                for(let x = 0; x < openCounts.count.length; x++) {
+                    sumPastArr[x] = sumPastArr[x] ? sumPastArr[x] + openCounts.count[x] : openCounts.count[x]
+                }
+            })
+            return sumPastArr
+        })
 
-        return res.status(200).json({
-            status: 200,
-            msg: "Locker history retrieved",
-            xAxis: xAxis,
-            yAxis: yAxis,
-            yForecast: yForecast,
-            date: lockerHistory.date
+        runPython("userDemand", pastData)
+        .then((result) => {
+            console.log(result, "aaaaa")
+            const yForecast = JSON.parse(result);
+            return res.status(200).json({
+                status: 200,
+                msg: "Locker history retrieved",
+                xAxis: xAxis,
+                yAxis: yAxis,
+                yForecast: yForecast,
+                date: lockerHistory.date
+            })
+
+        })
+        .catch((e) => {
+            errorMessage(e, res)
         })
     }
     catch (e) {
