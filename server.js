@@ -27,8 +27,6 @@ app.use(cookieParser())
 app.use(cors({
 	origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501', 'http://192.168.1.110:5501'],
 
-  	// origin: '*',
-
 	// origin:  (origin, callback) => {
 	// 	// Check if the request comes from an allowed origin
 	// 	// For simplicity, you might want to implement a more secure check

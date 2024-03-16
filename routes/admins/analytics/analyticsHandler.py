@@ -67,17 +67,24 @@ if __name__ == "__main__":
     functionName = sys.argv[1]
     data = json.loads(sys.argv[2])
 
-    match functionName:
-        case "test1":
-            result = test1()
-        case "test2":
-            result = test2(data)
-        case "occupancy":
-            result = occupancy(data)
-        case "userDemand":
-            result = userDemand(data)
-        case _:
-            result = "Invalid function name"
+    if (functionName == "occupancy"):
+        result = occupancy(data)
+    elif (functionName == "userDemand"):
+        result = userDemand(data)
+    else:
+        result = "Invalid function name"
+
+    # match functionName:
+    #     case "test1":
+    #         result = test1()
+    #     case "test2":
+    #         result = test2(data)
+    #     case "occupancy":
+    #         result = occupancy(data)
+    #     case "userDemand":
+    #         result = userDemand(data)
+    #     case _:
+    #         result = "Invalid function name"
 
 
     print(json.dumps(result))
