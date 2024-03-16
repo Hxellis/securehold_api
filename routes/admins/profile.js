@@ -21,7 +21,7 @@ function signJWT(data, res) {
     .cookie('access_token',token,{
         expires: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        domain: 'localhost',
+        // domain: 'localhost',
         secure: true,
         sameSite: 'none',
         overwrite: true

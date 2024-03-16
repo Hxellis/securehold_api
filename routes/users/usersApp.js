@@ -75,7 +75,7 @@ usersApp.get("/logout", async (req, res) => {
 
         return res.clearCookie("access_token", {
             httpOnly: true,
-            domain: 'localhost',
+            // domain: 'localhost',
             secure: true,
             sameSite: 'none',
         }).status(200).json({

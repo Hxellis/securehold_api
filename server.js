@@ -24,6 +24,7 @@ const port = 3000;
 
 app.use(express.static('public'));
 app.use(cookieParser())
+app.use(cors())
 // app.use(cors({
 // 	// origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'],
 //   	// origin: '*',
@@ -77,7 +78,7 @@ app.get("/checkToken", (req, res) => {
 app.get("/clearToken", (req,res) => {
 	return res.clearCookie("access_token", {
 		httpOnly: true,
-        domain: 'localhost',
+        // domain: 'localhost',
         secure: true,
         sameSite: 'none',
 	}).status(200).json({
