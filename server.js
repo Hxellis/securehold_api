@@ -109,7 +109,8 @@ await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + proces
 		console.log(`Server is running on port ${port}`);
 	});
 
-	updateOccupancyCount()
+	// dont enable if you want to test admin stuff on data analytics 
+	// updateOccupancyCount()
 })
 .catch((error) => {
 	console.error('Error connecting to MongoDB:', error);

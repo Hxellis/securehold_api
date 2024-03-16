@@ -122,16 +122,16 @@ iot.post("/updateLockerStatus", async (req, res) => {
     try {
         const lockerId = req.body.lockerId
         const doorOpen = req.body.doorOpen
-
+        
         if (doorOpen) {
             await lockersModel.findOneAndUpdate({ _id: lockerId }, { $set: { door_status: true, last_used: Date.now() }, $inc: { open_count: 1}})
-            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: {activity: "Locker opened", timestamp: Date.now()}}})
+            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: { $each: [{activity: "Locker opened", timestamp: Date.now()}], $slice: -5 }}})
         }
         else {
-            const locker = await lockersModel.findOne({ _id: lockerId})
+            const locker = await lockersModel.findOne({ _id: lockerId}) 
             const useTime = (Date.now() - locker.last_used) / (1000 * 60)
             const locationId = (await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false}, $inc: { usage_minutes: useTime}},  { new: true })).location
-            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: {activity: "Locker closed", timestamp: Date.now()}}})
+            await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: { $each: [{activity: "Locker closed", timestamp: Date.now()}], $slice: -5 }}})
             
 
             const date = new Date()
@@ -155,7 +155,7 @@ iot.post("/updateLockerStatus", async (req, res) => {
                 }
 
                 await lockerHistoryModel.findOneAndUpdate(
-                    { date: date, 'demand_forecast.open_counts.location_id': lockerId},
+                    { date: date, 'demand_forecast.open_counts.location_id': locationId},
                     { $push: { 'demand_forecast.open_counts': { location_id: locationId, count: newCountArr }}}
                 )
             }
@@ -163,7 +163,7 @@ iot.post("/updateLockerStatus", async (req, res) => {
             const incrementObj = {};
             incrementObj[`demand_forecast.open_counts.$.count.${Math.floor(new Date().getHours() / hourInterval) + 1}`] = 1
             await lockerHistoryModel.findOneAndUpdate(
-                { date: date, 'demand_forecast.open_counts.location_id': lockerId},
+                { date: date, 'demand_forecast.open_counts.location_id': locationId},
                 { $inc: incrementObj}
             )
         }
