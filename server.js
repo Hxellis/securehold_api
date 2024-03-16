@@ -25,8 +25,8 @@ const port = 3000;
 app.use(express.static('public'));
 app.use(cookieParser())
 app.use(cors({
-	origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'],
-	
+	origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501', 'http://192.168.1.110:5501'],
+
   	// origin: '*',
 
 	// origin:  (origin, callback) => {

@@ -11,7 +11,9 @@ dotenv.config()
 
 export const dataAnalytics  = express.Router()
 
-const pythonFilePath = dirname(fileURLToPath(import.meta.url)) + "\\analytics\\" 
+// const pythonFilePath = dirname(fileURLToPath(import.meta.url)) + "\\analytics\\" 
+const pythonFilePath = dirname(fileURLToPath(import.meta.url)) + "/analytics/" 
+
 dataAnalytics.get("/test", (req, res) => {
 
     const data = [
