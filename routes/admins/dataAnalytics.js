@@ -97,14 +97,20 @@ dataAnalytics.post("/getOccupancyCount", async (req, res) => {
         })
         const yAxis = occupiedObj.map((arr) => arr.occupiedNum)
         const yAxisPeak = Math.max(...occupiedObj.map((obj) => obj.totalNum))
-        yAxis.push(analyticsHandler("occupancy", yAxis)) 
         
-        return res.status(200).json({
-            status: 200,
-            msg: "Locker history retrieved",
-            xAxis: xAxis,
-            yAxis: yAxis,
-            yAxisPeak: yAxisPeak
+        runPython("occupancy", yAxis)
+        .then((result) => {
+            yAxis.push(JSON.parse(result)[0]) 
+            return res.status(200).json({
+                status: 200,
+                msg: "Locker history retrieved",
+                xAxis: xAxis,
+                yAxis: yAxis,
+                yAxisPeak: yAxisPeak
+            })
+        })
+        .catch((e) => {
+            errorMessage(e, res)
         })
     }
     catch (e) {
@@ -148,14 +154,21 @@ dataAnalytics.post("/getDemandForecast", async (req, res) => {
             return sumPastArr
         })
 
-        const yForecast = analyticsHandler("userDemand", pastData);
-        return res.status(200).json({
-            status: 200,
-            msg: "Locker history retrieved",
-            xAxis: xAxis,
-            yAxis: yAxis,
-            yForecast: yForecast,
-            date: lockerHistory.date
+        runPython("userDemand", pastData)
+        .then((result) => {
+            const yForecast = JSON.parse(result);
+            return res.status(200).json({
+                status: 200,
+                msg: "Locker history retrieved",
+                xAxis: xAxis,
+                yAxis: yAxis,
+                yForecast: yForecast,
+                date: lockerHistory.date
+            })
+
+        })
+        .catch((e) => {
+            errorMessage(e, res)
         })
 
     }
