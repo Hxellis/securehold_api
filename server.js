@@ -24,22 +24,22 @@ const port = 3000;
 
 app.use(express.static('public'));
 app.use(cookieParser())
-app.use(cors({
-	// origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'],
-  	// origin: '*',
-	origin:  (origin, callback) => {
-		// Check if the request comes from an allowed origin
-		// For simplicity, you might want to implement a more secure check
-		const allowedOrigins = ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'];
+// app.use(cors({
+// 	// origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'],
+//   	// origin: '*',
+// 	origin:  (origin, callback) => {
+// 		// Check if the request comes from an allowed origin
+// 		// For simplicity, you might want to implement a more secure check
+// 		const allowedOrigins = ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'];
 		
-		if (!origin || allowedOrigins.includes(origin)) {
-		  callback(null, true);
-		} else {
-		  callback(new Error('Not allowed by CORS'));
-		}
-	  },
-	credentials: true,
-}))
+// 		if (!origin || allowedOrigins.includes(origin)) {
+// 		  callback(null, true);
+// 		} else {
+// 		  callback(new Error('Not allowed by CORS'));
+// 		}
+// 	  },
+// 	credentials: true,
+// }))
 
 //sample get
 app.get("/", (req, res) => {
