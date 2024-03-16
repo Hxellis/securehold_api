@@ -1,5 +1,10 @@
+import os
 import sys
 import json
+
+numpy_path = '/opt/render/.local/lib/python3.7/site-packages'
+if numpy_path not in sys.path:
+    sys.path.append(numpy_path)
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
