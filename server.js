@@ -25,7 +25,7 @@ const port = 3000;
 app.use(express.static('public'));
 app.use(cookieParser())
 app.use(cors({
-	origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501', 'https://securehold-admin.onrender.com', 'https://securehold-user.onrender.com'],
+	origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501', 'https://securehold-admin.onrender.com', 'https://capstoneuser.onrender.com'],
 
 	// origin:  (origin, callback) => {
 	// 	// Check if the request comes from an allowed origin
