@@ -5,29 +5,19 @@ import errorMessage from '../../apiErrorMessage.js'
 
 export const database  = express.Router()
 
-function formatDatabaseObject(obj) {
+function formatDatabaseObject(obj, db) {
     const formattedObj = obj
     const excludedFields = ["occupied_by", "locker_id"]
 
     for (const [key, value] of Object.entries(formattedObj)) {
-        
         if (!value) {
-            if (excludedFields.includes(key)) {
+            if ((key == "occupied_by" && db == "lockers") || (key == "locker_id" && db == "users")) {
                 formattedObj[key] = null
             }
             else {
                 delete formattedObj[key];
             }
         }
-        // else if(key.includes(".")){
-        //     const newObjKeys = key.split('.');
-
-        //     if ( formattedObj[newObjKeys[0]]) {
-        //         console.log("enter", newObjKeys[0])
-        //         formattedObj[newObjKeys[0]][newObjKeys[1]] = value
-        //     }
-       
-        // }
     }
 
     return formattedObj
@@ -107,7 +97,7 @@ database.post("/insertDb", async (req, res) => {
     const location = req.body.location
     delete req.body.location
 
-    const newData = formatDatabaseObject(req.body)
+    const newData = formatDatabaseObject(req.body, db)
 
     let updatedData = {}
     try {
@@ -171,13 +161,16 @@ database.post("/editDb", async (req, res) => {
     const location = req.body.location
     delete req.body.location
 
-    const editData = formatDatabaseObject(req.body)
+    const editData = formatDatabaseObject(req.body, db)
     let updatedData = {}
     try {
         if ( db == "users") {
-            await usersModel.findOneAndUpdate({ _id: _id},{ $set: editData })
+            const oldUser = await usersModel.findOneAndUpdate({ _id: _id},{ $set: editData })
             if (editData.locker_id) {
                 await lockersModel.findOneAndUpdate({ _id: editData.locker_id}, { $set: { occupied_by: _id }}) 
+                if (oldUser.locker_id) {
+                    await lockersModel.findOneAndUpdate({ _id: oldUser.locker_id},{ $set: { occupied_by: null} })
+                }
             }
             else {
                 await lockersModel.findOneAndUpdate({ occupied_by: _id}, { $set: { occupied_by: null }}) 
@@ -185,9 +178,12 @@ database.post("/editDb", async (req, res) => {
             updatedData = await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
         }
         else if ( db == "lockers" ) {
-            await lockersModel.findOneAndUpdate( { _id: _id }, { $set: editData})
+            const oldLocker = await lockersModel.findOneAndUpdate( { _id: _id }, { $set: editData})
             if (editData.occupied_by) {
                 await usersModel.findOneAndUpdate({ _id: editData.occupied_by}, { $set: { locker_id: _id }}) 
+                if (oldLocker.occupied_by) {
+                    await usersModel.findOneAndUpdate({ _id: oldLocker.occupied_by},{ $set: { locker_id: null} })
+                }
             }
             else {
                 await usersModel.findOneAndUpdate({ locker_id: _id}, { $set: { locker_id: null }}) 
@@ -282,4 +278,28 @@ database.post("/insertLockerLocation", async (req, res) => {
     catch (e) {
         return errorMessage(e, res)
     }
+})
+
+database.get("/getLockerIds", async (req, res) => {
+    await lockersModel.find({ occupied_by: null }, { projection: {_id: true}})
+    .then((data) => {
+        return res.status(200).json({
+            status: 200,
+            msg: "Locker Ids retrieved",
+            id: data
+        })
+    })
+    .catch((e) => errorMessage(e,res))
+})
+
+database.get("/getUserIds", async (req, res) => {
+    await usersModel.find({ locker_id: null}, { projection: {_id: true}})
+    .then((data) => {
+        return res.status(200).json({
+            status: 200,
+            msg: "User Ids retrieved",
+            id: data
+        })
+    })
+    .catch((e) => errorMessage(e,res))
 })
