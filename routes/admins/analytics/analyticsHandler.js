@@ -20,46 +20,28 @@ function test2(data) {
 }
 
 function occupancy(data) {
-    const num_days = [3, 2, 1, 0];
-    const occupancy_data = data;
+    const numDaysArr = Array.from({ length: data.length }, (_, index) => index);
+    const regressionLine = linearRegression(numDaysArr.map((day, index) => [day, data[index]]));
+    const y_predicted_tomorrow = regressionLine.m * (data.length) + regressionLine.b;
 
-    const regressionLine = linearRegression(num_days.map((day, index) => [day, occupancy_data[index]]));
-    const slope = regressionLine.m;
-    const intercept = regressionLine.b;
-
-    // Predict the value for tomorrow (represented as -1)
-    const y_predicted_tomorrow = slope * (-1) + intercept;
-
-    return y_predicted_tomorrow;
+    return Math.floor(y_predicted_tomorrow);
 }
 
 function userDemand(data) {
-    const numRows = data.length;
-    const numCols = data[0].length;
+    const numDays = data.length
+    const numIntervals = data[0].length;
 
-    // Calculate the average demand for each day
-    const averageDemand = new Array(numCols).fill(0);
-
-    for (let i = 0; i < numCols; i++) {
-        let sum = 0;
-        for (let j = 0; j < numRows; j++) {
-            sum += data[j][i];
-        }
-        averageDemand[i] = sum / numRows;
+    const predictedValues = []
+    for ( let x  = 0; x < numIntervals; x++ ) {
+        const parsedData = data.map((intervals, index) => {
+            return [index, intervals[x]]
+        })
+        const regressionLine = linearRegression(parsedData);
+        const predictedNum = ( regressionLine.m * (numDays)) + regressionLine.b
+        predictedValues.push(Math.floor(predictedNum))
     }
 
-    // Generate an array representing the number of days (1, 2, 3, ...)
-    const numDays = Array.from({ length: numCols }, (_, index) => index + 1);
-
-    // Perform linear regression
-    const regressionLine = linearRegression(numDays.map((day, index) => [day, averageDemand[index]]));
-    const slope = regressionLine.m;
-    const intercept = regressionLine.b;
-
-    // Predict the demand for each day
-    const predictedDemand = numDays.map(day => slope * day + intercept);
-
-    return predictedDemand;
+    return predictedValues;
 }
 
 export default function analyticsHandler(functionName, data) {
