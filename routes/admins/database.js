@@ -7,8 +7,7 @@ export const database  = express.Router()
 
 function formatDatabaseObject(obj, db) {
     const formattedObj = obj
-    const excludedFields = ["occupied_by", "locker_id"]
-
+    // const excludedFields = ["occupied_by", "locker_id"]
     for (const [key, value] of Object.entries(formattedObj)) {
         if (!value) {
             if ((key == "occupied_by" && db == "lockers") || (key == "locker_id" && db == "users")) {
@@ -45,10 +44,10 @@ database.post("/getOneDb", async (req, res) => {
         let recordData = {}
 
         if (db == "users") {
-            recordData = await usersModel.findOne({ _id: _id}, { 'web_data.hash': false, 'web_data.salt': false })
+            recordData = await usersModel.findOne({ _id: _id}, { 'web_data.hash': false, 'web_data.salt': false }).populate("locker_id")
         }
         else if ( db == "lockers") {
-            recordData = await lockersModel.findOne({ _id: _id })
+            recordData = await lockersModel.findOne({ _id: _id }).populate("occupied_by")
         }
 
         return res.status(200).json({
@@ -281,7 +280,7 @@ database.post("/insertLockerLocation", async (req, res) => {
 })
 
 database.get("/getLockerIds", async (req, res) => {
-    await lockersModel.find({ occupied_by: null }, { projection: {_id: true}})
+    await lockersModel.find({ occupied_by: null }, { locker_id: true})
     .then((data) => {
         return res.status(200).json({
             status: 200,
@@ -293,7 +292,7 @@ database.get("/getLockerIds", async (req, res) => {
 })
 
 database.get("/getUserIds", async (req, res) => {
-    await usersModel.find({ locker_id: null}, { projection: {_id: true}})
+    await usersModel.find({ locker_id: null}, { name: true})
     .then((data) => {
         return res.status(200).json({
             status: 200,

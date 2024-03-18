@@ -1,5 +1,5 @@
 import express from "express";
-import { lockerHistoryModel, lockerLocationsModel, lockersModel } from '../../models/models.js'
+import { lockerHistoryModel, lockerLocationsModel, lockersModel, usersModel } from '../../models/models.js'
 import dotenv from 'dotenv'
 import errorMessage from "../../apiErrorMessage.js";
 import { spawn } from "child_process";
@@ -54,8 +54,9 @@ function runPython(filename, data) {
 }
 
 dataAnalytics.get("/getLockerLocationIds", async (req, res) => {
-    await lockerLocationsModel.find({}, { projection: {_id: true}})
+    await lockerLocationsModel.find({}, {  name: true})
     .then((data) => {
+        console.log(data)
         return res.status(200).json({
             status: 200,
             msg: "Locker Ids retrieved",
@@ -166,7 +167,7 @@ dataAnalytics.post("/getDemandForecast", async (req, res) => {
 
 dataAnalytics.get("/getLockerUsages", async (req, res) => {
     try {
-        const lockerLocations = await lockerLocationsModel.find({}, {  name: true})
+        const lockerLocations = await lockerLocationsModel.find({}, { name: true})
         const lockers = await lockersModel.find({})
         const labels = []
         const values = []
@@ -191,6 +192,23 @@ dataAnalytics.get("/getLockerUsages", async (req, res) => {
             values: values
         })
 
+    }
+    catch (e) {
+        return errorMessage(e, res)
+    }
+})
+
+dataAnalytics.get("/getRegisteredWebUsers", async (req, res) => {
+    try {
+        const totalUsers = await usersModel.countDocuments({})
+        const registeredUsers = await usersModel.countDocuments({ 'web_data.username': { $ne: null}})
+
+        return res.status(200).json({
+            status: 200,
+            msg: "Web user count retrieved",
+            total: totalUsers,
+            registered: registeredUsers
+        })
     }
     catch (e) {
         return errorMessage(e, res)
