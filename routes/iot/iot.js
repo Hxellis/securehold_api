@@ -33,9 +33,7 @@ iot.get("/getAnnouncements", async (req, res) => {
 iot.post("/getUserData", async (req, res) => {
     try {
         const rfid  = req.body.rfid
-        console.log(rfid)
         const userData  = await usersModel.findOne( { 'auth_data.rfid': rfid }, {projection: { 'web_data.hash': false, 'web_data.salt': false}})
-        console.log(userData)
         if (userData) {
             const userLocker = userData.locker_id
             const userName = userData.name
@@ -165,9 +163,10 @@ iot.post("/updateLockerStatus", async (req, res) => {
             
             const incrementObj = {};
             incrementObj[`demand_forecast.open_counts.$.count.${Math.floor(new Date().getHours() / hourInterval) + 1}`] = 1
-            await lockerHistoryModel.findOneAndUpdate(
+            const ligma = await lockerHistoryModel.findOneAndUpdate(
                 { date: date, 'demand_forecast.open_counts.location_id': locationId},
-                { $inc: incrementObj}
+                { $inc: incrementObj},
+                { new: true}
             )
         }
 
