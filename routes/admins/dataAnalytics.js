@@ -56,7 +56,6 @@ function runPython(filename, data) {
 dataAnalytics.get("/getLockerLocationIds", async (req, res) => {
     await lockerLocationsModel.find({}, {  name: true})
     .then((data) => {
-        console.log(data)
         return res.status(200).json({
             status: 200,
             msg: "Locker Ids retrieved",
@@ -69,7 +68,7 @@ dataAnalytics.get("/getLockerLocationIds", async (req, res) => {
 dataAnalytics.post("/getOccupancyCount", async (req, res) => {
     try {
         const locationId = req.body?.locationId || null
-        const lockerHistory = await lockerHistoryModel.find()
+        const lockerHistory = await lockerHistoryModel.find().limit(4)
 
         // xAxis
         const xAxis = lockerHistory.map((dailyOccupancy) => dailyOccupancy.date)
