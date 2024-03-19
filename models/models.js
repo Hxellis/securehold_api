@@ -45,11 +45,14 @@ const usersSchema = new mongoose.Schema({
     phone: { type: String, unique: true},
     locker_id: {type: mongoose.Schema.Types.ObjectId, ref: "lockers", default: null},
     web_data: {
-        username: { type: String, default: null},
-        email: { type: String, default: null, unique: true},
-        hash: { type: String, default: null },
-        salt: { type: String, default: null},
-        last_login: { type: Date, default: null}
+        type: {
+            username: String,
+            email: String,
+            hash: String,
+            salt: String,
+            last_login: Date
+        },
+        default: null
     },
     auth_data: {
         rfid: String,

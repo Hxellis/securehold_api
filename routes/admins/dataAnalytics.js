@@ -201,7 +201,7 @@ dataAnalytics.get("/getLockerUsages", async (req, res) => {
 dataAnalytics.get("/getRegisteredWebUsers", async (req, res) => {
     try {
         const totalUsers = await usersModel.countDocuments({})
-        const registeredUsers = await usersModel.countDocuments({ 'web_data.username': { $ne: null}})
+        const registeredUsers = await usersModel.countDocuments({ web_data: { $ne: null}})
 
         return res.status(200).json({
             status: 200,

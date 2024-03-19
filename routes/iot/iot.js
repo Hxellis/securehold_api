@@ -37,11 +37,13 @@ iot.post("/getUserData", async (req, res) => {
         const userData  = await usersModel.findOne( { 'auth_data.rfid': rfid }, {projection: { 'web_data.hash': false, 'web_data.salt': false}})
         console.log(userData)
         if (userData) {
+            const userLocker = userData.locker_id
             const userName = userData.name
             const userFinger = userData.auth_data.fingerprint;
             return res.status(200).json({
                 status: 200,
                 msg: "Retrieved user data",
+                userLocker: userLocker,
                 userData: userData,
                 userName: userName,
                 userFinger: userFinger
@@ -51,6 +53,7 @@ iot.post("/getUserData", async (req, res) => {
             return res.status(200).json({
                 status: 400,
                 msg: "No user data",
+                userLocker: null,
                 userData: null,
                 userName: null,
                 userFinger: null

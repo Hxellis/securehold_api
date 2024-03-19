@@ -13,6 +13,7 @@ usersApp.get("/getUserData", async (req, res) => {
         const userId = (jwt.verify(req.cookies.access_token, process.env.JWT_KEY))._id;
         
         const data = await usersModel.findOne({ _id: userId }, { projection: { 'web_data.hash': false, 'web_data.salt': false } }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}});
+        console.log(data)
         return res.status(200).json({
             status: 200,
             msg: "User data retrieved",
@@ -24,7 +25,7 @@ usersApp.get("/getUserData", async (req, res) => {
 });
 
 usersApp.get("/getAnnouncements", async (req, res) => {
-    await annoucementsModel.find({ type: "Users"}).populate("admin")
+    await annoucementsModel.find({ type: "Users"}).populate("admin").sort({_id: -1})
     .then( (resp) => {
         return res.status(200).json({
             status: 200,

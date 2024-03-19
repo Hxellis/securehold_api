@@ -97,17 +97,17 @@ database.post("/insertDb", async (req, res) => {
     delete req.body.location
 
     const newData = formatDatabaseObject(req.body, db)
-
+    console.log(newData)
     let updatedData = {}
     try {
         if (db == "users") { 
             await usersModel.create(newData) 
-            if (newData.locker_id) {
-                await lockersModel.findOneAndUpdate({ _id: newData.locker_id}, { $set: { occupied_by: _id }}) 
-            }
-            else {
-                await lockersModel.findOneAndUpdate({ occupied_by: _id}, { $set: { occupied_by: null }}) 
-            }
+            // if (newData.locker_id) {
+            //     await lockersModel.findOneAndUpdate({ _id: newData.locker_id}, { $set: { occupied_by: _id }}) 
+            // }
+            // else {
+            //     await lockersModel.findOneAndUpdate({ occupied_by: _id}, { $set: { occupied_by: null }}) 
+            // }
             updatedData = await usersModel.find({}, { 'web_data.hash': false, 'web_data.salt': false }).populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
         }
         else if ( db == "lockers") {
@@ -125,6 +125,7 @@ database.post("/insertDb", async (req, res) => {
         });
     }
     catch (e) {
+        console.log(e)
         if (e instanceof mongoose.Error.ValidationError) {
             const errorFields = Object.keys(e.errors);
             const errorPath = errorFields[0];
@@ -220,11 +221,11 @@ database.post("/deleteDb", async (req, res) => {
     try {
         if ( db == "users") {
             await usersModel.deleteOne({_id: _id})
-            updatedData = await usersModel.find()
+            updatedData = await usersModel.find().populate({ path: "locker_id", populate: { path: 'location', model: "locker_locations"}})
         }
         else if ( db== "lockers") {
             await lockersModel.deleteOne( {_id: _id})
-            updatedData = await lockersModel.find({ location: location})
+            updatedData = await lockersModel.find({ location: location}).populate("occupied_by")
         }
         return res.status(200).json({
             status: 200,
@@ -301,4 +302,15 @@ database.get("/getUserIds", async (req, res) => {
         })
     })
     .catch((e) => errorMessage(e,res))
+})
+
+
+
+database.get("/samples", async (req, res) => {
+    const lockerIds = await lockersModel.find({ location: "65dcb95283c9dccafa3c1b81"}, { _id: true})
+    const lockerArr = lockerIds.map((item) => item._id)
+
+    return res.status(200).send(
+        lockerArr
+    )
 })
