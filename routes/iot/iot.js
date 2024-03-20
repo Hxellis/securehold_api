@@ -131,7 +131,7 @@ iot.post("/updateLockerStatus", async (req, res) => {
         else {
             const locker = await lockersModel.findOne({ _id: lockerId}) 
             const useTime = (Date.now() - locker.last_used) / (1000 * 60)
-            const locationId = (await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false}, $inc: { usage_minutes: useTime}},  { new: true })).location
+            const locationId = (await lockersModel.findOneAndUpdate({ _id: lockerId}, { $set: {door_status: false, last_used: Date.now()}, $inc: { usage_minutes: useTime}},  { new: true })).location
             await usersModel.findOneAndUpdate({ locker_id: lockerId}, { $push: { recent_activity: { $each: [{activity: "Locker closed", timestamp: Date.now()}], $slice: -5 }}})
             
 
