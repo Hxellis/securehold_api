@@ -26,18 +26,6 @@ app.use(express.static('public'));
 app.use(cookieParser())
 app.use(cors({
 	origin: ['http://127.0.0.1:5500', 'http://127.0.0.1:5501', 'https://securehold-admin.onrender.com', 'https://capstoneuser.onrender.com'],
-
-	// origin:  (origin, callback) => {
-	// 	// Check if the request comes from an allowed origin
-	// 	// For simplicity, you might want to implement a more secure check
-	// 	const allowedOrigins = ['http://127.0.0.1:5500', 'http://127.0.0.1:5501'];
-		
-	// 	if (!origin || allowedOrigins.includes(origin)) {
-	// 	  callback(null, true);
-	// 	} else {
-	// 	  callback(new Error('Not allowed by CORS'));
-	// 	}
-	//   },
 	credentials: true,
 }))
 
@@ -77,7 +65,6 @@ app.get("/checkToken", (req, res) => {
 app.get("/clearToken", (req,res) => {
 	return res.clearCookie("access_token", {
 		httpOnly: true,
-        // domain: 'localhost',
         secure: true,
         sameSite: 'none',
 	}).status(200).json({
@@ -100,7 +87,8 @@ app.use("/users/usersApp", multer().array(), usersApp)
 app.use("/iot/iot", express.json(), iot)
 
 //database connection
-await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")
+await mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@" + 
+process.env.DB_CLUSTER_NAME + ".soedthy.mongodb.net/" +  process.env.DB_NAME+ "?retryWrites=true&w=majority")
 .then(() => {
 	console.log('Connected to MongoDB'); 
 	

@@ -139,7 +139,7 @@ users.post("/checkPhoneNumExist", async (req, res) => {
     .catch ( (e) => { errorMessage(e, res) })
 
     if (user) {
-        if (!user.web_data.user_id) {
+        if (!user.web_data) {
             return res.status(200).json({
                 status: 200,
                 msg: "User can signup"
